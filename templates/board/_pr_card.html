@@ -1,0 +1,34 @@
+<div class="card">
+    <div class="card-header">
+        <div class="card-title-row">
+            <a href="/board/{{ board.contributor.github_username }}/pr/{{ item.repo }}/{{ item.number }}?token={{ token }}" class="card-title">
+                PR #{{ item.number }} — {{ item.title }}
+            </a>
+            <a href="{{ item.github_url }}" target="_blank" rel="noopener" class="card-gh-icon" title="Open on GitHub">&nearr;</a>
+        </div>
+        <div class="card-meta">
+            <span class="card-repo">{{ item.short_repo }}</span>
+            <span class="card-sep">&middot;</span>
+            <span>by {{ item.author }}</span>
+            <span class="card-sep">&middot;</span>
+            <span class="badge badge-tier badge-tier-{{ item.tier }}">{{ item.tier_label }}</span>
+            <span class="badge badge-{{ item.risk_class }}">{{ item.risk }} risk</span>
+        </div>
+    </div>
+    {% set parts = item.summary | split_summary %}
+    <div class="card-body">
+        <p class="card-description">{{ parts.description }}</p>
+        {% if parts.updates %}
+        <ul class="card-updates">
+            {% for update in parts.updates %}
+            <li>{{ update }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% if item.recommendation %}
+    <div class="card-footer">
+        <p class="card-recommendation">{{ item.recommendation }}</p>
+    </div>
+    {% endif %}
+</div>

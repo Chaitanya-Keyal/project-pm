@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Contributors — Project PM{% endblock %}
+
+{% block nav %}
+<a href="/admin/contributors">Contributors</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <div>
+        <h2>Contributors</h2>
+        <p class="subtitle">
+            {{ contributors | length }} discovered from project activity
+            &middot;
+            {{ contributors | selectattr('enabled') | list | length }} boards enabled
+        </p>
+    </div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Contributor</th>
+            <th class="hide-mobile">PRs</th>
+            <th class="hide-mobile">Reviews</th>
+            <th class="hide-mobile">Comments</th>
+            <th>Activity</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in contributors %}
+        <tr id="row-{{ c.github_username }}">
+            <td>
+                <a href="https://github.com/{{ c.github_username }}" target="_blank" rel="noopener">
+                    {{ c.github_username }}
+                </a>
+                {% if c.role %}
+                <span class="badge badge-role">{{ c.role }}</span>
+                {% endif %}
+            </td>
+            <td class="hide-mobile">
+                <span class="stat{% if c.pr_count == 0 %} stat-zero{% endif %}">{{ c.pr_count }}</span>
+            </td>
+            <td class="hide-mobile">
+                <span class="stat{% if c.review_count == 0 %} stat-zero{% endif %}">{{ c.review_count }}</span>
+            </td>
+            <td class="hide-mobile">
+                <span class="stat{% if c.comment_count == 0 %} stat-zero{% endif %}">{{ c.comment_count }}</span>
+            </td>
+            <td>
+                <span class="stat">{{ c.total_activity }}</span>
+            </td>
+            <td>
+                {% if c.enabled %}
+                <span class="badge badge-enabled">enabled</span>
+                {% endif %}
+            </td>
+            <td id="action-{{ c.github_username }}">
+                {% if c.enabled %}
+                <button class="btn btn-danger btn-sm"
+                        hx-post="/admin/contributors/{{ c.github_username }}/disable"
+                        hx-target="#row-{{ c.github_username }}"
+                        hx-swap="outerHTML">
+                    Disable
+                </button>
+                {% else %}
+                <button class="btn btn-primary btn-sm"
+                        hx-post="/admin/contributors/{{ c.github_username }}/enable"
+                        hx-target="#row-{{ c.github_username }}"
+                        hx-swap="outerHTML">
+                    Enable
+                </button>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

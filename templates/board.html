@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}{{ board.contributor.display_name }} — Project PM{% endblock %}
+
+{% block nav %}
+<a href="/board/{{ board.contributor.github_username }}?token={{ token }}">My Board</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <div>
+        <h2>{{ board.contributor.display_name }}'s Board</h2>
+        {% if board.contributor.role %}
+        <p class="subtitle">{{ board.contributor.role | replace('_', ' ') | title }}</p>
+        {% endif %}
+    </div>
+</div>
+
+{# === ACTION NEEDED === #}
+{% if board.action_needed %}
+<section class="board-section">
+    <h3 class="section-header section-action">Action Needed</h3>
+    <div class="card-list">
+        {% for item in board.action_needed %}
+        {% include "board/_pr_card.html" %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{# === WATCHING === #}
+{% if board.watching %}
+<section class="board-section">
+    <h3 class="section-header section-watching">Watching</h3>
+    <div class="card-list">
+        {% for item in board.watching %}
+        {% include "board/_pr_card.html" %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{# === SUGGESTIONS === #}
+{% if board.suggestions %}
+<section class="board-section">
+    <h3 class="section-header section-suggestions">
+        Suggestions
+        <span class="section-count">{{ board.suggestions | length }}</span>
+    </h3>
+    <div class="card-list">
+        {% for item in board.suggestions %}
+        {% include "board/_pr_card.html" %}
+        {% endfor %}
+    </div>
+</section>
+{% else %}
+<section class="board-section">
+    <h3 class="section-header section-suggestions">Suggestions</h3>
+    <p class="empty-state">No suggestions right now. Check back after the next scan.</p>
+</section>
+{% endif %}
+{% endblock %}
