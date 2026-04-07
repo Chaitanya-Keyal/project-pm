@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Search — Project PM{% endblock %}
+
+{% block nav %}
+<a href="/search" class="nav-active">Search</a>
+{% endblock %}
+
+{% block content %}
+<div class="search-page">
+
+    <h2>Search Project History</h2>
+    <p class="subtitle">Find discussions, decisions, and context across issues, PRs, and Telegram threads.</p>
+
+    <form id="search-form" class="search-form" action="/search" method="get">
+        <div class="search-input-row">
+            <input
+                type="text"
+                name="q"
+                value="{{ q }}"
+                placeholder="e.g. camera driver refactor, NFC support, PSBT signing..."
+                class="search-input"
+                autofocus
+                hx-get="/search/results"
+                hx-trigger="keyup changed delay:400ms"
+                hx-target="#search-results"
+                hx-include="#search-form"
+            >
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+        <div class="search-filters">
+            <span class="search-filters-label">Include:</span>
+            <label class="filter-checkbox">
+                <input
+                    type="checkbox"
+                    name="prs"
+                    value="on"
+                    {% if include_prs is not defined or include_prs %}checked{% endif %}
+                    hx-get="/search/results"
+                    hx-trigger="change"
+                    hx-target="#search-results"
+                    hx-include="#search-form"
+                >
+                <span class="badge badge-source badge-source-pr">PR</span> Assessments
+            </label>
+            <label class="filter-checkbox">
+                <input
+                    type="checkbox"
+                    name="issues"
+                    value="on"
+                    {% if include_issues is not defined or include_issues %}checked{% endif %}
+                    hx-get="/search/results"
+                    hx-trigger="change"
+                    hx-target="#search-results"
+                    hx-include="#search-form"
+                >
+                <span class="badge badge-source badge-source-issue">Issue</span> Assessments
+            </label>
+            <label class="filter-checkbox">
+                <input
+                    type="checkbox"
+                    name="telegram"
+                    value="on"
+                    {% if include_telegram is not defined or include_telegram %}checked{% endif %}
+                    hx-get="/search/results"
+                    hx-trigger="change"
+                    hx-target="#search-results"
+                    hx-include="#search-form"
+                >
+                <span class="badge badge-source badge-source-telegram">Telegram</span> Discussions
+            </label>
+        </div>
+    </form>
+
+    <div id="search-results">
+        {% include "search/_results.html" %}
+    </div>
+
+</div>
+{% endblock %}

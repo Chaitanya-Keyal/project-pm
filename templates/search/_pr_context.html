@@ -1,0 +1,43 @@
+{% if error %}
+<p class="empty-state">Context search unavailable</p>
+{% elif results %}
+<div class="related-context-list">
+    {% for r in results %}
+    {% if r.source_type == "pr_assessment" %}
+    <a href="/search/pr/{{ r.metadata.repo }}/{{ r.metadata.pr_number }}" class="related-context-item related-context-link">
+    {% elif r.source_type == "issue_assessment" %}
+    <a href="/search/issue/{{ r.metadata.repo }}/{{ r.metadata.issue_number }}" class="related-context-item related-context-link">
+    {% else %}
+    <a href="/search/telegram/{{ r.id }}" class="related-context-item related-context-link">
+    {% endif %}
+        <div class="related-context-header">
+            {% if r.source_type == "pr_assessment" %}
+            <span class="badge badge-source badge-source-pr">PR</span>
+            <span class="related-context-ref">{{ r.metadata.repo }}#{{ r.metadata.pr_number }}</span>
+            {% if pr_titles.get(r.id) %}
+            <span class="related-context-title">{{ pr_titles[r.id] }}</span>
+            {% endif %}
+            {% elif r.source_type == "issue_assessment" %}
+            <span class="badge badge-source badge-source-issue">Issue</span>
+            <span class="related-context-ref">{{ r.metadata.repo }}#{{ r.metadata.issue_number }}</span>
+            {% if issue_titles.get(r.id) %}
+            <span class="related-context-title">{{ issue_titles[r.id] }}</span>
+            {% endif %}
+            {% else %}
+            <span class="badge badge-source badge-source-telegram">Telegram</span>
+            {% if r.metadata.topic %}
+            <span class="related-context-title">{{ r.metadata.topic }}</span>
+            {% endif %}
+            {% if r.metadata.period %}
+            <span class="related-context-ref">{{ r.metadata.period }}</span>
+            {% endif %}
+            {% endif %}
+            <span class="search-result-score">{{ "%.0f"|format(r.score * 100) }}%</span>
+        </div>
+        <p class="related-context-text">{{ r.text[:300] }}{% if r.text|length > 300 %}...{% endif %}</p>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<p class="empty-state">No related context found</p>
+{% endif %}

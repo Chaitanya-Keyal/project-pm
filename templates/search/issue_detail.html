@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Issue #{{ detail.number }} — {{ detail.title }} — Project PM{% endblock %}
+
+{% block nav %}
+<a href="/search">Search</a>
+{% endblock %}
+
+{% block content %}
+<div class="detail-page">
+
+    <a href="javascript:history.back()" class="detail-back">&larr; Back to results</a>
+
+    {# === HEADER === #}
+    <div class="detail-header">
+        <div class="detail-repo">{{ detail.repo }}</div>
+        <h2 class="detail-title">
+            Issue #{{ detail.number }} &mdash; {{ detail.title }}
+            <a href="https://github.com/{{ detail.repo }}/issues/{{ detail.number }}" target="_blank" rel="noopener" class="detail-gh-link" title="Open on GitHub">&nearr;</a>
+        </h2>
+        <div class="detail-meta">
+            <img src="https://github.com/{{ detail.author }}.png?size=40" alt="" class="avatar avatar-sm">
+            <span>{{ detail.author }}</span>
+            {% if detail.created_at %}
+            <span class="card-sep">&middot;</span>
+            <span title="{{ detail.created_at }}">opened {{ detail.created_at | days_ago }}</span>
+            {% endif %}
+            {% if detail.closed_at %}
+            <span class="card-sep">&middot;</span>
+            <span title="{{ detail.closed_at }}">closed {{ detail.closed_at | days_ago }}</span>
+            {% elif detail.updated_at %}
+            <span class="card-sep">&middot;</span>
+            <span title="{{ detail.updated_at }}">last activity {{ detail.updated_at | days_ago }}</span>
+            {% endif %}
+            <span class="card-sep">&middot;</span>
+            <span class="badge badge-issue-state-{{ detail.state }}">{{ detail.state }}</span>
+        </div>
+    </div>
+
+    {# === AT A GLANCE === #}
+    <div class="detail-glance">
+        <div class="glance-row">
+            <span class="glance-item"><span class="glance-label">Comments</span> <span class="glance-value">{{ detail.comment_count }}</span></span>
+            {% if detail.category %}
+            <span class="glance-item"><span class="glance-label">Category</span> <span class="badge badge-complexity">{{ detail.category | replace('_', ' ') }}</span></span>
+            {% endif %}
+            {% if detail.discussion_state %}
+            <span class="glance-item"><span class="glance-label">State</span> <span class="badge badge-discussion-{{ detail.discussion_state }}">{{ detail.discussion_state | replace('_', ' ') }}</span></span>
+            {% endif %}
+        </div>
+        <div class="glance-row">
+            {% if detail.tier is not none %}
+            <span class="glance-item"><span class="glance-label">Tier</span> <span class="badge badge-tier badge-tier-{{ detail.tier }}">Tier {{ detail.tier }}</span></span>
+            {% endif %}
+            {% if detail.complexity %}
+            <span class="glance-item"><span class="glance-label">Complexity</span> <span class="badge badge-complexity">{{ detail.complexity }}</span></span>
+            {% endif %}
+            {% if detail.impact %}
+            <span class="glance-item"><span class="glance-label">Impact</span> <span class="badge badge-impact-{{ detail.impact }}">{{ detail.impact }}</span></span>
+            {% endif %}
+        </div>
+    </div>
+
+    {# === LABELS === #}
+    {% if detail.labels %}
+    <div class="issue-labels">
+        {% for label in detail.labels %}
+        <span class="badge badge-complexity">{{ label }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# === STALE WARNING === #}
+    {% if detail.stale_reason %}
+    <div class="detail-stale-banner">
+        {{ detail.stale_reason | replace('_', ' ') | title }}
+    </div>
+    {% endif %}
+
+    {# === SUMMARY === #}
+    {% if detail.summary %}
+    <div class="detail-section">
+        <h3>Summary</h3>
+        <p>{{ detail.summary }}</p>
+    </div>
+    {% endif %}
+
+    {# === RECOMMENDATION === #}
+    {% if detail.recommendation %}
+    <div class="detail-section">
+        <h3>AI Commentary</h3>
+        <p class="card-recommendation">{{ detail.recommendation }}</p>
+    </div>
+    {% endif %}
+
+    {# === DISCUSSION POSITIONS === #}
+    {% if detail.discussion_positions %}
+    <div class="detail-section">
+        <h3>Key Positions</h3>
+        <div class="detail-participants">
+            {% for dp in detail.discussion_positions %}
+            <div class="participant-entry">
+                <div class="participant-header">
+                    <img src="https://github.com/{{ dp.user }}.png?size=40" alt="" class="avatar">
+                    <span class="participant-name">{{ dp.user }}</span>
+                </div>
+                <p class="discussion-position-text">{{ dp.position }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# === PARTICIPANTS === #}
+    {% if detail.participant_contributions %}
+    <div class="detail-section">
+        <h3>Participants</h3>
+        <div class="detail-participants">
+            {% for p in detail.participant_contributions %}
+            <div class="participant-entry">
+                <div class="participant-header">
+                    <img src="https://github.com/{{ p.github_username }}.png?size=40" alt="" class="avatar">
+                    <span class="participant-name">{{ p.github_username }}</span>
+                    <span class="badge badge-role">{{ p.role | replace('_', ' ') }}</span>
+                </div>
+                {% if p.contributions %}
+                <ul class="participant-contributions">
+                    {% for c in p.contributions %}
+                    <li>{{ c.detail }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# === CROSS REFERENCES === #}
+    {% if detail.cross_references %}
+    <div class="detail-section">
+        <h3>Related</h3>
+        <ul class="detail-related">
+            {% for ref in detail.cross_references %}
+            <li>
+                <span class="related-type">{{ ref.type | replace('_', ' ') | title }}:</span>
+                {{ ref.target }}
+                {% if ref.note %} &mdash; {{ ref.note }}{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {# === SUGGESTED LABELS === #}
+    {% if detail.labels_suggested %}
+    <div class="detail-section">
+        <h3>Suggested Labels</h3>
+        <div class="issue-labels">
+            {% for label in detail.labels_suggested %}
+            <span class="badge badge-complexity">{{ label }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# === RELATED CONTEXT (semantic search, lazy-loaded) === #}
+    {% if detail.summary %}
+    <div class="detail-section">
+        <h3>Related Context</h3>
+        <div
+            hx-get="/search/pr-context/{{ detail.repo }}/{{ detail.number }}?summary={{ detail.summary[:200] | urlencode }}&source=issue"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+        >
+            <span class="htmx-indicator">Searching for related discussions...</span>
+            <p class="empty-state">Loading related context...</p>
+        </div>
+    </div>
+    {% endif %}
+
+    {# === FOOTER === #}
+    <div class="detail-footer">
+        <a href="https://github.com/{{ detail.repo }}/issues/{{ detail.number }}" target="_blank" rel="noopener" class="btn btn-primary">Open on GitHub &nearr;</a>
+        <a href="javascript:history.back()" class="btn btn-secondary">&larr; Back to results</a>
+    </div>
+
+</div>
+{% endblock %}

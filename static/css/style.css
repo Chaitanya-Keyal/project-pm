@@ -752,6 +752,370 @@ button, .btn {
     display: inline-block;
 }
 
+/* Search page */
+.search-page {
+    max-width: 900px;
+}
+
+.search-page .subtitle {
+    margin-bottom: 1.5rem;
+}
+
+.search-form {
+    margin-bottom: 1.5rem;
+}
+
+.search-input-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.search-input {
+    flex: 1;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    padding: 0.6rem 1rem;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.search-input:focus {
+    border-color: var(--accent);
+}
+
+.search-filters {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.search-filters-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.filter-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.filter-checkbox input[type="checkbox"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* Search results */
+.search-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.search-result {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1.15rem;
+    transition: border-color 0.15s;
+}
+
+.search-result:hover {
+    border-color: var(--text-muted);
+}
+
+.search-result-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.search-result-ref {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.search-result-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.search-result-link:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
+.search-result-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    margin-bottom: 0.3rem;
+}
+
+.search-result-score {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.search-result-body {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+/* Source type badges */
+.badge-source {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.badge-source-pr {
+    background-color: rgba(88, 166, 255, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+}
+
+.badge-source-telegram {
+    background-color: rgba(42, 171, 238, 0.15);
+    color: #2aabee;
+    border: 1px solid rgba(42, 171, 238, 0.3);
+}
+
+.badge-source-issue {
+    background-color: rgba(163, 113, 247, 0.15);
+    color: #a371f7;
+    border: 1px solid rgba(163, 113, 247, 0.3);
+}
+
+/* Issue state badges */
+.badge-issue-state-open {
+    background-color: rgba(63, 185, 80, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.badge-issue-state-closed {
+    background-color: rgba(163, 113, 247, 0.15);
+    color: #a371f7;
+    border: 1px solid rgba(163, 113, 247, 0.3);
+}
+
+/* Discussion state badges */
+.badge-discussion-active {
+    background-color: rgba(63, 185, 80, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.badge-discussion-stale {
+    background-color: rgba(210, 153, 34, 0.15);
+    color: var(--warning);
+    border: 1px solid rgba(210, 153, 34, 0.3);
+}
+
+.badge-discussion-resolved {
+    background-color: rgba(139, 148, 158, 0.15);
+    color: var(--text-secondary);
+    border: 1px solid rgba(139, 148, 158, 0.3);
+}
+
+.badge-discussion-wont_fix {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
+.badge-discussion-duplicate {
+    background-color: rgba(139, 148, 158, 0.15);
+    color: var(--text-muted);
+    border: 1px solid rgba(139, 148, 158, 0.3);
+}
+
+/* Impact badges */
+.badge-impact-low {
+    background-color: rgba(139, 148, 158, 0.15);
+    color: var(--text-secondary);
+    border: 1px solid rgba(139, 148, 158, 0.3);
+}
+
+.badge-impact-medium {
+    background-color: rgba(210, 153, 34, 0.15);
+    color: var(--warning);
+    border: 1px solid rgba(210, 153, 34, 0.3);
+}
+
+.badge-impact-high {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
+/* Issue detail specifics */
+.issue-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.discussion-position-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.55;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+/* Related context (PR detail page) */
+.related-context-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.related-context-item {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.65rem 1rem;
+}
+
+.related-context-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s;
+}
+
+.related-context-link:hover {
+    border-color: var(--text-muted);
+    text-decoration: none;
+    color: inherit;
+}
+
+.related-context-title {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+}
+
+.related-context-header {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.related-context-ref {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+}
+
+.related-context-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+/* Telegram detail page */
+.telegram-detail-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.telegram-detail-ref {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.telegram-highlights {
+    list-style: disc;
+    padding-left: 1.25rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.telegram-highlights li {
+    margin-bottom: 0.35rem;
+}
+
+.telegram-person-takes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.person-take {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+.person-take-avatar {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.person-take-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    flex-shrink: 0;
+}
+
+.person-take-name::after {
+    content: " —";
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.person-take-text {
+    color: var(--text-secondary);
+}
+
+.telegram-narrative {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+
+.nav-active {
+    color: var(--text-primary) !important;
+}
+
 /* HTMX loading indicator */
 .htmx-indicator {
     opacity: 0;

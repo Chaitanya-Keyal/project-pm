@@ -1,0 +1,62 @@
+{% if error %}
+<div class="flash flash-error">{{ error }}</div>
+{% elif q and not results %}
+<p class="empty-state">No results found for "{{ q }}"</p>
+{% elif results %}
+<div class="search-results-list">
+    {% for r in results %}
+    {% if r.source_type == "pr_assessment" %}
+    <a href="/search/pr/{{ r.metadata.repo }}/{{ r.metadata.pr_number }}" class="search-result search-result-link">
+    {% elif r.source_type == "issue_assessment" %}
+    <a href="/search/issue/{{ r.metadata.repo }}/{{ r.metadata.issue_number }}" class="search-result search-result-link">
+    {% else %}
+    <a href="/search/telegram/{{ r.id }}" class="search-result search-result-link">
+    {% endif %}
+        <div class="search-result-header">
+            {% if r.source_type == "pr_assessment" %}
+            <span class="badge badge-source badge-source-pr">PR</span>
+            <span class="search-result-ref">
+                {% if r.metadata.repo %}{{ r.metadata.repo }}{% endif %}#{{ r.metadata.pr_number }}
+            </span>
+            {% if r.metadata.tier is not none %}
+            <span class="badge badge-tier badge-tier-{{ r.metadata.tier }}">Tier {{ r.metadata.tier }}</span>
+            {% endif %}
+            {% elif r.source_type == "issue_assessment" %}
+            <span class="badge badge-source badge-source-issue">Issue</span>
+            <span class="search-result-ref">
+                {% if r.metadata.repo %}{{ r.metadata.repo }}{% endif %}#{{ r.metadata.issue_number }}
+            </span>
+            {% if r.metadata.tier is not none %}
+            <span class="badge badge-tier badge-tier-{{ r.metadata.tier }}">Tier {{ r.metadata.tier }}</span>
+            {% endif %}
+            {% if r.metadata.category %}
+            <span class="badge badge-complexity">{{ r.metadata.category | replace('_', ' ') }}</span>
+            {% endif %}
+            {% if r.metadata.discussion_state %}
+            <span class="badge badge-discussion-{{ r.metadata.discussion_state }}">{{ r.metadata.discussion_state | replace('_', ' ') }}</span>
+            {% endif %}
+            {% else %}
+            <span class="badge badge-source badge-source-telegram">Telegram</span>
+            {% if r.metadata.category %}
+            <span class="badge badge-complexity">{{ r.metadata.category }}</span>
+            {% endif %}
+            {% if r.metadata.period %}
+            <span class="search-result-ref">{{ r.metadata.period }}</span>
+            {% endif %}
+            {% endif %}
+            <span class="search-result-score">{{ "%.0f"|format(r.score * 100) }}%</span>
+        </div>
+        {% if r.source_type == "pr_assessment" and pr_titles.get(r.id) %}
+        <div class="search-result-title">{{ pr_titles[r.id] }}</div>
+        {% elif r.source_type == "issue_assessment" and issue_titles.get(r.id) %}
+        <div class="search-result-title">{{ issue_titles[r.id] }}</div>
+        {% elif r.metadata.topic %}
+        <div class="search-result-title">{{ r.metadata.topic }}</div>
+        {% endif %}
+        <div class="search-result-body">
+            {{ r.text[:500] }}{% if r.text|length > 500 %}...{% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}

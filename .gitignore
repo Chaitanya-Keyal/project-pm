@@ -19,5 +19,6 @@ build/
 # OS
 .DS_Store
 
-# Claude
+# Claude Code
 .claude/
+.claude-auto-commit

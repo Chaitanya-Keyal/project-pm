@@ -24,11 +24,11 @@
             <span>{{ detail.author }}</span>
             {% if detail.created_at %}
             <span class="card-sep">&middot;</span>
-            <span title="{{ detail.created_at[:19] }}">opened {{ detail.created_at | days_ago }}</span>
+            <span title="{{ detail.created_at }}">opened {{ detail.created_at | days_ago }}</span>
             {% endif %}
             {% if detail.updated_at %}
             <span class="card-sep">&middot;</span>
-            <span title="{{ detail.updated_at[:19] }}">last activity {{ detail.updated_at | days_ago }}</span>
+            <span title="{{ detail.updated_at }}">last activity {{ detail.updated_at | days_ago }}</span>
             {% endif %}
         </div>
     </div>
@@ -162,6 +162,21 @@
             </li>
             {% endfor %}
         </ul>
+    </div>
+    {% endif %}
+
+    {# === RELATED CONTEXT (semantic search, lazy-loaded) === #}
+    {% if detail.summary %}
+    <div class="detail-section">
+        <h3>Related Context</h3>
+        <div
+            hx-get="/search/pr-context/{{ detail.repo }}/{{ detail.number }}?summary={{ detail.summary[:200] | urlencode }}"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+        >
+            <span class="htmx-indicator">Searching for related discussions...</span>
+            <p class="empty-state">Loading related context...</p>
+        </div>
     </div>
     {% endif %}
 

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}{% if thread.metadata.topic %}{{ thread.metadata.topic }} — {% endif %}Telegram Discussion — Project PM{% endblock %}
+
+{% block nav %}
+<a href="/search">Search</a>
+{% endblock %}
+
+{% block content %}
+<div class="detail-page">
+
+    <a href="javascript:history.back()" class="detail-back">&larr; Back to results</a>
+
+    {# === HEADER === #}
+    <div class="detail-header">
+        <div class="telegram-detail-badges">
+            <span class="badge badge-source badge-source-telegram">Telegram</span>
+            {% if thread.metadata.category %}
+            <span class="badge badge-complexity">{{ thread.metadata.category }}</span>
+            {% endif %}
+            {% if thread.metadata.period %}
+            <span class="telegram-detail-ref">{{ thread.metadata.period }}</span>
+            {% endif %}
+        </div>
+        {% if thread.metadata.topic %}
+        <h2 class="detail-title">{{ thread.metadata.topic }}</h2>
+        {% endif %}
+    </div>
+
+    {# === SUMMARY === #}
+    {% if parsed.summary %}
+    <div class="detail-section">
+        <h3>Summary</h3>
+        <p>{{ parsed.summary }}</p>
+    </div>
+    {% endif %}
+
+    {# === KEY POINTS === #}
+    {% if parsed.highlights %}
+    <div class="detail-section">
+        <h3>Key Points</h3>
+        <ul class="telegram-highlights">
+            {% for item in parsed.highlights %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {# === PARTICIPANT PERSPECTIVES === #}
+    {% if parsed.person_takes %}
+    <div class="detail-section">
+        <h3>Participant Perspectives</h3>
+        <div class="telegram-person-takes">
+            {% for take in parsed.person_takes %}
+            <div class="person-take">
+                {% if take.github_login %}
+                <img src="https://github.com/{{ take.github_login }}.png?size=40" alt="" class="avatar avatar-sm person-take-avatar">
+                {% endif %}
+                <span class="person-take-name">{{ take.name }}</span>
+                <span class="person-take-text">{{ take.text }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# === FULL DISCUSSION === #}
+    {% if parsed.narrative %}
+    <div class="detail-section">
+        <h3>Full Discussion</h3>
+        <p class="telegram-narrative">{{ parsed.narrative }}</p>
+    </div>
+    {% endif %}
+
+    {# === FOOTER === #}
+    <div class="detail-footer">
+        {% if telegram_link %}
+        <a href="{{ telegram_link }}" target="_blank" rel="noopener" class="btn btn-primary">Open in Telegram &nearr;</a>
+        {% endif %}
+        <a href="javascript:history.back()" class="btn btn-secondary">&larr; Back to results</a>
+    </div>
+
+</div>
+{% endblock %}
