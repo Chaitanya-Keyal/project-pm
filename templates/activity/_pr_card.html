@@ -1,0 +1,42 @@
+<div class="card">
+    <div class="card-header">
+        <div class="card-title-row">
+            <a href="/search/pr/{{ pr.repo }}/{{ pr.number }}" class="card-title">
+                PR #{{ pr.number }} — {{ pr.title }}
+            </a>
+            <a href="https://github.com/{{ pr.repo }}/pull/{{ pr.number }}" target="_blank" rel="noopener" class="card-gh-icon" title="Open on GitHub">&nearr;</a>
+        </div>
+        <div class="card-meta">
+            <span class="card-repo">{{ pr.repo.split('/')[-1] }}</span>
+            <span class="card-sep">&middot;</span>
+            <span>by {{ pr.author }}</span>
+            {% if pr.tier is not none %}
+            <span class="card-sep">&middot;</span>
+            <span class="badge badge-tier badge-tier-{{ pr.tier }}">{{ {0: "Trivial", 1: "Straightforward", 2: "Significant", 3: "Complex"}.get(pr.tier, "Unknown") }}</span>
+            {% endif %}
+            {% if pr.risk %}
+            <span class="badge badge-{{ {"low": "success", "medium": "warning", "high": "danger"}.get(pr.risk, "") }}">{{ pr.risk }} risk</span>
+            {% endif %}
+        </div>
+        <div class="card-timestamps">
+            {% if pr.updated_at %}
+            <span title="{{ pr.updated_at }}">updated {{ pr.updated_at | days_ago }}</span>
+            {% endif %}
+            {% if pr.created_at %}
+            <span class="card-sep">&middot;</span>
+            <span title="{{ pr.created_at }}">opened {{ pr.created_at | days_ago }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% set parts = pr.summary | split_summary %}
+    {% if parts.description %}
+    <div class="card-body">
+        <p class="card-description">{{ parts.description }}</p>
+    </div>
+    {% endif %}
+    {% if pr.recommendation %}
+    <div class="card-footer">
+        <p class="card-recommendation">{{ pr.recommendation }}</p>
+    </div>
+    {% endif %}
+</div>

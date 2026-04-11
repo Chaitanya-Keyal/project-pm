@@ -1,0 +1,16 @@
+{% if groups %}
+{% for label, prs in groups %}
+<div class="activity-group">
+    <div class="activity-divider">
+        <span class="activity-divider-label">{{ label }}</span>
+    </div>
+    <div class="card-list">
+        {% for pr in prs %}
+        {% include "activity/_pr_card.html" %}
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<p class="empty-state">No open pull requests found.</p>
+{% endif %}

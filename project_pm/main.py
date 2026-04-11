@@ -93,10 +93,12 @@ app.state.templates.env.filters["days_ago"] = days_ago
 app.mount("/static", StaticFiles(directory=PROJECT_ROOT / "static"), name="static")
 
 # Routes
+from project_pm.api.activity import router as activity_router  # noqa: E402
 from project_pm.api.admin import router as admin_router  # noqa: E402
 from project_pm.api.board import router as board_router  # noqa: E402
 from project_pm.api.search import router as search_router  # noqa: E402
 
+app.include_router(activity_router)
 app.include_router(admin_router)
 app.include_router(board_router)
 app.include_router(search_router)

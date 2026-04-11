@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Recent Activity — Project PM{% endblock %}
+
+{% block content %}
+<div class="activity-page">
+    <h2>Recent Activity</h2>
+    <p class="subtitle">Open pull requests across all repos, sorted by most recent activity.</p>
+
+    <div
+        hx-get="/activity/cards"
+        hx-trigger="every 60s"
+        hx-swap="innerHTML"
+    >
+        {% include "activity/_card_list.html" %}
+    </div>
+</div>
+{% endblock %}

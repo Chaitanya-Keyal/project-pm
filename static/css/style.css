@@ -1159,3 +1159,103 @@ button, .btn {
         display: none;
     }
 }
+
+/* Activity page */
+.activity-page {
+    max-width: 900px;
+}
+
+.activity-page .subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.card-timestamps {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* Pending actions — multi-person layout */
+.action-entry {
+    padding: 0.5rem 0;
+}
+
+.action-entry-border {
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+}
+
+.action-entry-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.action-entry-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.action-entry .action-summary {
+    margin-left: 2rem;
+}
+
+.action-entry .action-last-activity {
+    margin-left: 2rem;
+}
+
+/* Activity time dividers */
+.activity-group {
+    margin-bottom: 1.5rem;
+}
+
+.activity-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.activity-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--border);
+}
+
+.activity-divider-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+/* PR state badges */
+.badge-state {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+}
+
+.badge-state-open {
+    background-color: rgba(63, 185, 80, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.badge-state-merged {
+    background-color: rgba(163, 113, 247, 0.15);
+    color: #a371f7;
+    border: 1px solid rgba(163, 113, 247, 0.3);
+}
+
+.badge-state-closed {
+    background-color: rgba(248, 81, 73, 0.15);
+    color: var(--danger);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+}

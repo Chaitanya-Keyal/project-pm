@@ -20,6 +20,7 @@
             <a href="{{ detail.github_url }}" target="_blank" rel="noopener" class="detail-gh-link" title="Open on GitHub">&nearr;</a>
         </h2>
         <div class="detail-meta">
+            <span class="badge badge-state badge-state-{{ detail.state }}">{{ detail.state | capitalize }}</span>
             <img src="https://github.com/{{ detail.author }}.png?size=40" alt="" class="avatar avatar-sm">
             <span>{{ detail.author }}</span>
             {% if detail.created_at %}

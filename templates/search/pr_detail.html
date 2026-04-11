@@ -19,6 +19,7 @@
             <a href="{{ detail.github_url }}" target="_blank" rel="noopener" class="detail-gh-link" title="Open on GitHub">&nearr;</a>
         </h2>
         <div class="detail-meta">
+            <span class="badge badge-state badge-state-{{ detail.state }}">{{ detail.state | capitalize }}</span>
             <img src="https://github.com/{{ detail.author }}.png?size=40" alt="" class="avatar avatar-sm">
             <span>{{ detail.author }}</span>
             {% if detail.created_at %}
@@ -60,6 +61,33 @@
     {% if detail.stale_reason %}
     <div class="detail-stale-banner">
         {{ detail.stale_reason_label }}
+    </div>
+    {% endif %}
+
+    {# === PENDING ACTIONS === #}
+    {% if detail.pending_actions %}
+    <div class="detail-action-box">
+        <h3>Pending Actions</h3>
+        {% for username, actions in detail.pending_actions.items() %}
+        <div class="action-entry{% if not loop.last %} action-entry-border{% endif %}">
+            <div class="action-entry-header">
+                <img src="https://github.com/{{ username }}.png?size=40" alt="" class="avatar avatar-sm">
+                <span class="action-entry-name">{{ username }}</span>
+                {% if actions.role %}
+                <span class="badge badge-role">{{ actions.role | replace('_', ' ') }}</span>
+                {% endif %}
+                {% if actions.open_items and actions.open_items > 1 %}
+                <span class="action-count">{{ actions.open_items }} items</span>
+                {% endif %}
+            </div>
+            {% if actions.summary %}
+            <p class="action-summary">{{ actions.summary }}</p>
+            {% endif %}
+            {% if actions.last_activity_at %}
+            <p class="action-last-activity" title="{{ actions.last_activity_at[:19] }}">Last activity: {{ actions.last_activity_at | days_ago }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
     </div>
     {% endif %}
 
