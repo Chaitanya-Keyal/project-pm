@@ -249,7 +249,25 @@ button, .btn {
     font-weight: 600;
 }
 
+.stat-open {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
 /* Contributor tier groups */
+.column-legend {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.column-legend p {
+    margin: 0;
+}
+
 .contributor-tier-group {
     margin-bottom: 2.5rem;
 }
@@ -263,14 +281,20 @@ button, .btn {
 }
 
 .contributors-table {
-    table-layout: fixed;
     width: 100%;
 }
 
 .contributors-table .col-stat {
-    width: 5.5rem;
-    text-align: left;
+    width: 8rem;
+    text-align: center;
 }
+
+.contributors-table .col-stat-open {
+    width: 5rem;
+    text-align: left;
+    padding-left: 0;
+}
+
 
 
 /* Page title bar */

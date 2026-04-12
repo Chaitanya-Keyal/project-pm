@@ -16,6 +16,13 @@
     </div>
 </div>
 
+<div class="column-legend">
+    <p><strong>PRs</strong> — merged count, plus open PRs still in progress</p>
+    <p><strong>Code Reviews</strong> — inline comments on specific lines of code (excludes own PRs)</p>
+    <p><strong>Comments</strong> — general discussion in PR threads (excludes own PRs)</p>
+    <p><strong>Activity</strong> — total across all categories</p>
+</div>
+
 {% for label, members in groups %}
 <div class="contributor-tier-group">
     <h3 class="section-header">{{ label }} <span class="section-count">{{ members | length }}</span></h3>
@@ -23,8 +30,8 @@
         <thead>
             <tr>
                 <th>Contributor</th>
-                <th class="hide-mobile col-stat">PRs</th>
-                <th class="hide-mobile col-stat">Reviews</th>
+                <th class="hide-mobile col-stat" colspan="2">PRs</th>
+                <th class="hide-mobile col-stat">Code Reviews</th>
                 <th class="hide-mobile col-stat">Comments</th>
                 <th class="col-stat">Activity</th>
             </tr>
@@ -43,16 +50,19 @@
                     <span class="badge badge-role">{{ c.role }}</span>
                     {% endif %}
                 </td>
-                <td class="hide-mobile">
-                    <span class="stat stat-tier-{{ c.pr_tier }}">{{ c.pr_count }}</span>
+                <td class="hide-mobile col-stat">
+                    <span class="stat stat-tier-{{ c.pr_tier }}">{{ c.prs_merged }}</span>
                 </td>
-                <td class="hide-mobile">
+                <td class="hide-mobile col-stat-open">
+                    {% if c.prs_open %}<span class="stat-open">{{ c.prs_open }} open</span>{% endif %}
+                </td>
+                <td class="hide-mobile col-stat">
                     <span class="stat stat-tier-{{ c.review_tier }}">{{ c.review_count }}</span>
                 </td>
-                <td class="hide-mobile">
+                <td class="hide-mobile col-stat">
                     <span class="stat stat-tier-{{ c.review_tier }}">{{ c.comment_count }}</span>
                 </td>
-                <td>
+                <td class="col-stat">
                     <span class="stat">{{ c.total_activity }}</span>
                 </td>
             </tr>

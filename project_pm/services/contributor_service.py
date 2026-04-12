@@ -16,6 +16,8 @@ class DiscoveredContributor:
 
     github_username: str
     pr_count: int
+    prs_merged: int
+    prs_open: int
     review_count: int
     comment_count: int
     last_activity: str | None
@@ -51,6 +53,8 @@ async def discover_contributors(
         DiscoveredContributor(
             github_username=c.github_username,
             pr_count=c.pr_count,
+            prs_merged=c.prs_merged,
+            prs_open=c.prs_open,
             review_count=c.review_count,
             comment_count=c.comment_count,
             last_activity=str(c.last_active) if c.last_active else None,
