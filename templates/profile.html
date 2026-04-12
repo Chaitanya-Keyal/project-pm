@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Project PM{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <h2>Your Profile</h2>
+
+    <div class="profile-card">
+        {% if user.avatar_url %}
+        <img src="{{ user.avatar_url }}" alt="" class="avatar avatar-lg">
+        {% endif %}
+        <div class="profile-info">
+            <span class="profile-username">{{ user.github_username }}</span>
+            {% if user.is_admin %}<span class="badge badge-admin">Admin</span>{% endif %}
+        </div>
+    </div>
+
+    <div class="profile-section">
+        <h3>Telegram Identity</h3>
+
+        {% if contributor and contributor.telegram_confirmed %}
+        <div class="telegram-status">
+            <p>Linked as: <strong>{{ contributor.telegram_display_name }}</strong></p>
+            <p class="text-secondary">To change this, update below.</p>
+        </div>
+        {% else %}
+        <p class="profile-description">Link your Telegram display name so we can connect your chat activity to your profile.</p>
+        {% endif %}
+
+        {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form action="/profile/telegram" method="post" class="telegram-form">
+            {% if suggested_names %}
+            <fieldset>
+                <legend>We found these names linked to your profile:</legend>
+                {% for name in suggested_names %}
+                <label class="radio-label">
+                    <input type="radio" name="telegram_name" value="{{ name }}"
+                        {% if contributor and contributor.telegram_display_name == name %}checked{% endif %}>
+                    {{ name }}
+                </label>
+                {% endfor %}
+                <label class="radio-label radio-label-other">
+                    <input type="radio" name="telegram_name" value="" id="custom-radio">
+                    <span>Other:</span>
+                    <input type="text" name="custom_telegram_name" id="custom-name-input"
+                        placeholder="Your Telegram display name" class="input-inline">
+                </label>
+            </fieldset>
+            {% else %}
+            <div class="form-group">
+                <label for="telegram_name_input">Telegram display name</label>
+                <input type="text" name="telegram_name" id="telegram_name_input"
+                    placeholder="Your display name in Telegram group chats"
+                    value="{{ contributor.telegram_display_name or '' if contributor else '' }}"
+                    class="input-full">
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    {% if contributor and contributor.telegram_confirmed %}Update{% else %}Confirm{% endif %}
+                </button>
+                {% if contributor and contributor.telegram_confirmed %}
+                <a href="{{ request.session.get('post_profile_next', '/') }}" class="btn btn-secondary">Skip</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if suggested_names %}
+<script>
+document.querySelector('.telegram-form').addEventListener('submit', function(e) {
+    const customRadio = document.getElementById('custom-radio');
+    if (customRadio && customRadio.checked) {
+        const customInput = document.getElementById('custom-name-input');
+        customRadio.value = customInput.value;
+    }
+});
+document.getElementById('custom-radio')?.addEventListener('change', function() {
+    document.getElementById('custom-name-input')?.focus();
+});
+</script>
+{% endif %}
+{% endblock %}

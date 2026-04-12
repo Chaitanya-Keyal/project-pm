@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from project_pm.auth import require_admin
 from project_pm.database import get_pm_db
 from project_pm.services.contributor_service import (
     discover_contributors,
@@ -15,6 +16,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 @router.get("/contributors", response_class=HTMLResponse)
 async def contributors_page(
     request: Request,
+    user: dict = Depends(require_admin),
     pm_db: AsyncSession = Depends(get_pm_db),
 ):
     lens = request.app.state.lens
@@ -31,6 +33,7 @@ async def contributors_page(
 async def enable_contributor_route(
     request: Request,
     github_username: str,
+    user: dict = Depends(require_admin),
     pm_db: AsyncSession = Depends(get_pm_db),
 ):
     await enable_contributor(pm_db, github_username)
@@ -53,6 +56,7 @@ async def enable_contributor_route(
 async def disable_contributor_route(
     request: Request,
     github_username: str,
+    user: dict = Depends(require_admin),
     pm_db: AsyncSession = Depends(get_pm_db),
 ):
     await disable_contributor(pm_db, github_username)

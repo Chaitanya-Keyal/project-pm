@@ -1,7 +1,7 @@
 <div class="card">
     <div class="card-header">
         <div class="card-title-row">
-            <a href="/board/{{ board.contributor.github_username }}/pr/{{ item.repo }}/{{ item.number }}?token={{ token }}" class="card-title">
+            <a href="/board/{{ board.contributor.github_username }}/pr/{{ item.repo }}/{{ item.number }}" class="card-title">
                 PR #{{ item.number }} — {{ item.title }}
             </a>
             <a href="{{ item.github_url }}" target="_blank" rel="noopener" class="card-gh-icon" title="Open on GitHub">&nearr;</a>

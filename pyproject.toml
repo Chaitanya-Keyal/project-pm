@@ -12,11 +12,15 @@ dependencies = [
     "pydantic-settings>=2.7",
     "python-multipart>=0.0.18",
     "project-lens",
+    "httpx>=0.28",
+    "itsdangerous>=2.1",
 ]
+
+[tool.setuptools.packages.find]
+include = ["project_pm*"]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.24",
-    "httpx>=0.28",
 ]

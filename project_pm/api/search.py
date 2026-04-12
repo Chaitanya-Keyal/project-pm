@@ -3,10 +3,11 @@
 import logging
 import re
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from project_lens import LensClient, SearchResult
 
+from project_pm.auth import require_login
 from project_pm.services.board_service import build_pr_detail
 
 logger = logging.getLogger(__name__)
@@ -97,7 +98,7 @@ async def _enrich_issue_titles(
 
 
 @router.get("/search", response_class=HTMLResponse)
-async def search_page(request: Request, q: str = ""):
+async def search_page(request: Request, q: str = "", user: dict = Depends(require_login)):
     """Full search page — renders form + results."""
     templates = request.app.state.templates
     lens = _get_lens(request)
@@ -134,7 +135,7 @@ async def search_page(request: Request, q: str = ""):
 
 
 @router.get("/search/results", response_class=HTMLResponse)
-async def search_results_partial(request: Request, q: str = ""):
+async def search_results_partial(request: Request, q: str = "", user: dict = Depends(require_login)):
     """HTMX partial — returns just the results list for live search."""
     templates = request.app.state.templates
     lens = _get_lens(request)
@@ -250,7 +251,7 @@ async def _get_telegram_link(lens: LensClient, chroma_id: str) -> str | None:
 
 
 @router.get("/search/telegram/{chroma_id:path}", response_class=HTMLResponse)
-async def telegram_detail_page(request: Request, chroma_id: str):
+async def telegram_detail_page(request: Request, chroma_id: str, user: dict = Depends(require_login)):
     """Full detail page for a Telegram thread digest."""
     templates = request.app.state.templates
     lens = _get_lens(request)
@@ -286,6 +287,7 @@ async def pr_detail_page(
     repo_owner: str,
     repo_name: str,
     pr_number: int,
+    user: dict = Depends(require_login),
 ):
     """Full detail page for a PR assessment, accessed from search results."""
     templates = request.app.state.templates
@@ -309,6 +311,7 @@ async def issue_detail_page(
     repo_owner: str,
     repo_name: str,
     issue_number: int,
+    user: dict = Depends(require_login),
 ):
     """Full detail page for a GitHub issue assessment."""
     templates = request.app.state.templates
@@ -338,6 +341,7 @@ async def related_context(
     number: int,
     summary: str = "",
     source: str = "pr",
+    user: dict = Depends(require_login),
 ):
     """HTMX partial — related context for a PR or issue detail page."""
     templates = request.app.state.templates

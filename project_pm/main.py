@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from project_lens import LensClient
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.templating import Jinja2Templates
 
 from project_pm.config import settings
@@ -31,6 +32,30 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Project PM", version="0.1.0", lifespan=lifespan)
+
+
+# Auth: redirect unauthenticated users to login
+from urllib.parse import quote  # noqa: E402
+
+from project_pm.auth import LoginRequiredError  # noqa: E402
+
+
+@app.exception_handler(LoginRequiredError)
+async def login_required_handler(request, exc: LoginRequiredError):
+    from fastapi.responses import RedirectResponse
+
+    next_url = quote(exc.next_url, safe="")
+    return RedirectResponse(url=f"/auth/login?next={next_url}")
+
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.session_secret_key,
+    session_cookie="pm_session",
+    max_age=14 * 24 * 3600,  # 14 days
+    same_site="lax",
+    https_only=not settings.debug,
+)
 
 # Jinja2 templates
 app.state.templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
@@ -88,6 +113,7 @@ def days_ago(date_val) -> str:
 
 
 app.state.templates.env.filters["days_ago"] = days_ago
+app.state.templates.env.globals["admin_usernames"] = settings.admin_usernames_set
 
 # Static files
 app.mount("/static", StaticFiles(directory=PROJECT_ROOT / "static"), name="static")
@@ -95,10 +121,14 @@ app.mount("/static", StaticFiles(directory=PROJECT_ROOT / "static"), name="stati
 # Routes
 from project_pm.api.activity import router as activity_router  # noqa: E402
 from project_pm.api.admin import router as admin_router  # noqa: E402
+from project_pm.api.auth import router as auth_router  # noqa: E402
 from project_pm.api.board import router as board_router  # noqa: E402
+from project_pm.api.profile import router as profile_router  # noqa: E402
 from project_pm.api.search import router as search_router  # noqa: E402
 
+app.include_router(auth_router)
 app.include_router(activity_router)
 app.include_router(admin_router)
 app.include_router(board_router)
+app.include_router(profile_router)
 app.include_router(search_router)

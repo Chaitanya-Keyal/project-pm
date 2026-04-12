@@ -2,9 +2,11 @@
 
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from project_lens import LensClient, PRWithAssessment
+
+from project_pm.auth import require_login
 
 router = APIRouter(tags=["activity"])
 
@@ -70,7 +72,7 @@ async def _get_grouped_prs(lens: LensClient):
 
 
 @router.get("/", response_class=HTMLResponse)
-async def activity_page(request: Request):
+async def activity_page(request: Request, user: dict = Depends(require_login)):
     """Home page — all open PRs sorted by most recent activity."""
     templates = request.app.state.templates
     lens = request.app.state.lens
@@ -84,7 +86,7 @@ async def activity_page(request: Request):
 
 
 @router.get("/activity/cards", response_class=HTMLResponse)
-async def activity_cards_partial(request: Request):
+async def activity_cards_partial(request: Request, user: dict = Depends(require_login)):
     """HTMX partial — returns just the card list for polling updates."""
     templates = request.app.state.templates
     lens = request.app.state.lens

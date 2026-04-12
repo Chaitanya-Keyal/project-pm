@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Access Denied — Project PM{% endblock %}
+
+{% block content %}
+<div class="auth-denied">
+    <h2>Access Denied</h2>
+    <p>Your GitHub account is not authorized to use Project PM.</p>
+    <p class="text-secondary">Only contributors with recorded project activity can sign in. If you believe this is an error, contact a project admin.</p>
+    <a href="/auth/login" class="btn btn-primary">Try Again</a>
+</div>
+{% endblock %}
