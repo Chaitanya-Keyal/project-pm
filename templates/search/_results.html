@@ -15,6 +15,9 @@
         <div class="search-result-header">
             {% if r.source_type == "pr_assessment" %}
             <span class="badge badge-source badge-source-pr">PR</span>
+            {% if r.metadata.github_state %}
+            <span class="badge badge-state badge-state-{{ r.metadata.github_state }}">{{ r.metadata.github_state | capitalize }}</span>
+            {% endif %}
             <span class="search-result-ref">
                 {% if r.metadata.repo %}{{ r.metadata.repo }}{% endif %}#{{ r.metadata.pr_number }}
             </span>

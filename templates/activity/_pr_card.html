@@ -7,16 +7,23 @@
             <a href="https://github.com/{{ pr.repo }}/pull/{{ pr.number }}" target="_blank" rel="noopener" class="card-gh-icon" title="Open on GitHub">&nearr;</a>
         </div>
         <div class="card-meta">
+            <img src="https://github.com/{{ pr.author }}.png?size=40" alt="" class="avatar avatar-sm">
+            <span>{{ pr.author }}</span>
+            {% if pr.repo != "SeedSigner/seedsigner" %}
+            <span class="card-sep">&middot;</span>
             <span class="card-repo">{{ pr.repo.split('/')[-1] }}</span>
-            <span class="card-sep">&middot;</span>
-            <span>by {{ pr.author }}</span>
-            {% if pr.tier is not none %}
-            <span class="card-sep">&middot;</span>
-            <span class="badge badge-tier badge-tier-{{ pr.tier }}">{{ {0: "Trivial", 1: "Straightforward", 2: "Significant", 3: "Complex"}.get(pr.tier, "Unknown") }}</span>
             {% endif %}
-            {% if pr.risk %}
-            <span class="badge badge-{{ {"low": "success", "medium": "warning", "high": "danger"}.get(pr.risk, "") }}">{{ pr.risk }} risk</span>
-            {% endif %}
+            <span class="card-badges">
+                {% if pr.state %}
+                <span class="badge badge-state badge-state-{{ pr.state }}">{{ pr.state | capitalize }}</span>
+                {% endif %}
+                {% if pr.tier is not none %}
+                <span class="badge badge-tier badge-tier-{{ pr.tier }}">{{ {0: "Trivial", 1: "Straightforward", 2: "Significant", 3: "Complex"}.get(pr.tier, "Unknown") }}</span>
+                {% endif %}
+                {% if pr.risk %}
+                <span class="badge badge-{{ {"low": "success", "medium": "warning", "high": "danger"}.get(pr.risk, "") }}">{{ pr.risk }} risk</span>
+                {% endif %}
+            </span>
         </div>
         <div class="card-timestamps">
             {% if pr.updated_at %}
@@ -28,6 +35,27 @@
             {% endif %}
         </div>
     </div>
+    {% if pr.pending_actions %}
+    {% set actionable = pr.pending_actions | dictsort | selectattr('1.open_items') | list %}
+    {% if actionable %}
+    <div class="card-pending-actions">
+        {% set current_user = request.session.get('github_username', '') %}
+        {% for username, action in actionable %}
+        <div class="pending-action {% if username.lower() == current_user.lower() %}pending-action-you{% endif %}">
+            <img src="https://github.com/{{ username }}.png?size=40" alt="" class="avatar avatar-xs">
+            <span class="pending-action-text">
+                {% if username.lower() == current_user.lower() %}
+                <strong>You</strong>
+                {% else %}
+                <strong>{{ username }}</strong>
+                {% endif %}
+                — {{ action.open_items }} item{{ 's' if action.open_items != 1 else '' }} pending
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
     {% set parts = pr.summary | split_summary %}
     {% if parts.description %}
     <div class="card-body">
