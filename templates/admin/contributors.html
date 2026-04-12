@@ -36,6 +36,9 @@
                     <a href="https://github.com/{{ c.github_username }}" target="_blank" rel="noopener">
                         {{ c.github_username }}
                     </a>
+                    {% if c.github_username.lower() in merge_authority_logins %}
+                    <span class="badge badge-maintainer">Maintainer</span>
+                    {% endif %}
                     {% if c.role %}
                     <span class="badge badge-role">{{ c.role }}</span>
                     {% endif %}

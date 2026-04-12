@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from project_lens import LensClient
 from starlette.middleware.sessions import SessionMiddleware
@@ -26,6 +26,9 @@ async def lifespan(app: FastAPI):
 
     # Initialize Lens client (search, identity, PR data)
     app.state.lens = LensClient(config_dir=settings.lens_config_dir)
+
+    # Expose merge authorities to templates
+    app.state.templates.env.globals["merge_authority_logins"] = app.state.lens.merge_authority_logins
 
     yield
 
@@ -122,7 +125,7 @@ from project_pm.auth import get_current_user  # noqa: E402
 
 
 @app.get("/")
-async def root(request):
+async def root(request: Request):
     """Redirect logged-in users to their board, others to login."""
     user = get_current_user(request)
     if user:
