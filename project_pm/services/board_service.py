@@ -1,7 +1,7 @@
 """Build per-person board data from Lens PR assessments + PM task actions."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from project_lens import LensClient, PRDetail as LensPRDetail, PRWithAssessment
 
@@ -43,7 +43,11 @@ class BoardItem:
     recommendation: str
     review_state: str | None = None
     participant_usernames: list[str] = field(default_factory=list)
+    participant_contributions: list | None = None
+    pending_actions: dict | None = None
     category: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     @property
     def source_ref(self) -> str:
@@ -157,9 +161,40 @@ class Board:
 
     github_username: str
     role: str | None = None
-    action_needed: list[BoardItem] = field(default_factory=list)
-    watching: list[BoardItem] = field(default_factory=list)
-    suggestions: list[BoardItem] = field(default_factory=list)
+    reviewing_groups: list[tuple[str, list[BoardItem]]] = field(default_factory=list)
+    my_pr_groups: list[tuple[str, list[BoardItem]]] = field(default_factory=list)
+    other_groups: list[tuple[str, list[BoardItem]]] = field(default_factory=list)
+
+    @staticmethod
+    def _latest_activity(groups: list[tuple[str, list[BoardItem]]]) -> datetime | None:
+        if groups and groups[0][1]:
+            item = groups[0][1][0]
+            return item.updated_at or item.created_at
+        return None
+
+    @property
+    def reviewing_count(self) -> int:
+        return sum(len(items) for _, items in self.reviewing_groups)
+
+    @property
+    def reviewing_latest(self) -> datetime | None:
+        return self._latest_activity(self.reviewing_groups)
+
+    @property
+    def my_pr_count(self) -> int:
+        return sum(len(items) for _, items in self.my_pr_groups)
+
+    @property
+    def my_pr_latest(self) -> datetime | None:
+        return self._latest_activity(self.my_pr_groups)
+
+    @property
+    def other_count(self) -> int:
+        return sum(len(items) for _, items in self.other_groups)
+
+    @property
+    def other_latest(self) -> datetime | None:
+        return self._latest_activity(self.other_groups)
 
 
 def _to_board_item(pr: PRWithAssessment) -> BoardItem:
@@ -188,8 +223,74 @@ def _to_board_item(pr: PRWithAssessment) -> BoardItem:
         recommendation=pr.recommendation or "",
         review_state=pr.review_state,
         participant_usernames=participants,
+        participant_contributions=pr.participant_contributions,
+        pending_actions=pr.pending_actions,
         category=category,
+        created_at=pr.created_at,
+        updated_at=pr.updated_at,
     )
+
+
+def _recency_label(dt: datetime | None, now: datetime, boundaries: dict) -> str:
+    """Return a human-friendly time bucket label for a datetime."""
+    if not dt:
+        return "Older"
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    if dt >= boundaries["today"]:
+        return "Today"
+    if dt >= boundaries["yesterday"]:
+        return "Yesterday"
+    if dt >= boundaries["this_week"]:
+        return "This week"
+    if dt >= boundaries["last_week"]:
+        return "Last week"
+    if dt >= boundaries["30_days"]:
+        return "Last 30 days"
+    if dt >= boundaries["60_days"]:
+        return "Last 60 days"
+    if dt >= boundaries["90_days"]:
+        return "Last 90 days"
+    return "Older"
+
+
+def group_by_recency(items: list) -> list[tuple[str, list]]:
+    """Group already-sorted items into time buckets. Returns [(label, items), ...].
+
+    Items must have ``updated_at`` and ``created_at`` attributes (datetime or None).
+    Works with BoardItem, PRWithAssessment, or any object with those fields.
+    """
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    boundaries = {
+        "today": today_start,
+        "yesterday": today_start - timedelta(days=1),
+        "this_week": today_start - timedelta(days=today_start.weekday()),
+        "last_week": today_start - timedelta(days=today_start.weekday() + 7),
+        "30_days": today_start - timedelta(days=30),
+        "60_days": today_start - timedelta(days=60),
+        "90_days": today_start - timedelta(days=90),
+    }
+
+    groups: list[tuple[str, list]] = []
+    current_label = None
+    current_items: list = []
+
+    for item in items:
+        dt = getattr(item, "updated_at", None) or getattr(item, "created_at", None)
+        label = _recency_label(dt, now, boundaries)
+        if label != current_label:
+            if current_items:
+                groups.append((current_label, current_items))
+            current_label = label
+            current_items = [item]
+        else:
+            current_items.append(item)
+
+    if current_items:
+        groups.append((current_label, current_items))
+
+    return groups
 
 
 async def build_board(lens: LensClient, github_username: str, role: str | None = None) -> Board:
@@ -199,10 +300,28 @@ async def build_board(lens: LensClient, github_username: str, role: str | None =
 
     open_prs = await lens.get_open_prs_with_assessments()
 
+    reviewing_items = []
+    my_pr_items = []
+    other_items = []
     for pr in open_prs:
         item = _to_board_item(pr)
-        if _is_suggestion_for(item, username, role):
-            board.suggestions.append(item)
+        if item.author == username:
+            my_pr_items.append(item)
+        elif username in item.participant_usernames:
+            reviewing_items.append(item)
+        else:
+            other_items.append(item)
+
+    # Sort each bucket by most recent activity, then group into time buckets
+    _sort_key = lambda i: i.updated_at or datetime.min
+    reviewing_items.sort(key=_sort_key, reverse=True)
+    board.reviewing_groups = group_by_recency(reviewing_items)
+
+    my_pr_items.sort(key=_sort_key, reverse=True)
+    board.my_pr_groups = group_by_recency(my_pr_items)
+
+    other_items.sort(key=_sort_key, reverse=True)
+    board.other_groups = group_by_recency(other_items)
 
     return board
 
@@ -284,18 +403,3 @@ async def build_pr_detail(
     )
 
 
-def _is_suggestion_for(item: BoardItem, username: str, role: str | None) -> bool:
-    """Determine if this PR should be suggested to this contributor."""
-    is_own_pr = item.author == username
-    is_participant = username in item.participant_usernames
-
-    if role == "lead_maintainer":
-        return not is_own_pr and item.tier >= 1
-    elif role == "lead_dev":
-        return not is_own_pr and item.tier >= 1
-    else:
-        if is_own_pr:
-            return True
-        if is_participant:
-            return True
-        return item.tier <= 1

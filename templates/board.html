@@ -12,47 +12,117 @@
     </div>
 </div>
 
-{# === ACTION NEEDED === #}
-{% if board.action_needed %}
-<section class="board-section">
-    <h3 class="section-header section-action">Action Needed</h3>
-    <div class="card-list">
-        {% for item in board.action_needed %}
-        {% include "board/_pr_card.html" %}
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
+{# === TAB BAR === #}
+<div class="board-tabs">
+    <button class="board-tab active" data-tab="reviewing">
+        <span class="tab-label">
+            Reviewing
+            {% if board.reviewing_count %}
+            <span class="section-count">{{ board.reviewing_count }}</span>
+            {% endif %}
+        </span>
+        {% if board.reviewing_latest %}
+        <span class="tab-latest">updated {{ board.reviewing_latest | days_ago }}</span>
+        {% endif %}
+    </button>
+    <button class="board-tab" data-tab="my-prs">
+        <span class="tab-label">
+            My PRs
+            {% if board.my_pr_count %}
+            <span class="section-count">{{ board.my_pr_count }}</span>
+            {% endif %}
+        </span>
+        {% if board.my_pr_latest %}
+        <span class="tab-latest">updated {{ board.my_pr_latest | days_ago }}</span>
+        {% endif %}
+    </button>
+    <button class="board-tab" data-tab="other">
+        <span class="tab-label">
+            Other Open PRs
+            {% if board.other_count %}
+            <span class="section-count">{{ board.other_count }}</span>
+            {% endif %}
+        </span>
+        {% if board.other_latest %}
+        <span class="tab-latest">updated {{ board.other_latest | days_ago }}</span>
+        {% endif %}
+    </button>
+</div>
 
-{# === WATCHING === #}
-{% if board.watching %}
-<section class="board-section">
-    <h3 class="section-header section-watching">Watching</h3>
-    <div class="card-list">
-        {% for item in board.watching %}
-        {% include "board/_pr_card.html" %}
-        {% endfor %}
+{# === REVIEWING TAB === #}
+<div class="board-tab-content active" id="tab-reviewing">
+{% if board.reviewing_groups %}
+    {% for label, items in board.reviewing_groups %}
+    <div class="activity-group">
+        <div class="activity-divider">
+            <span class="activity-divider-label">{{ label }}</span>
+        </div>
+        <div class="card-list">
+            {% for item in items %}
+            {% set pr = item %}
+            {% set pr_detail_url = "/board/" ~ board.github_username ~ "/pr/" ~ item.repo ~ "/" ~ item.number %}
+            {% include "shared/_pr_card.html" %}
+            {% endfor %}
+        </div>
     </div>
-</section>
-{% endif %}
-
-{# === SUGGESTIONS === #}
-{% if board.suggestions %}
-<section class="board-section">
-    <h3 class="section-header section-suggestions">
-        Suggestions
-        <span class="section-count">{{ board.suggestions | length }}</span>
-    </h3>
-    <div class="card-list">
-        {% for item in board.suggestions %}
-        {% include "board/_pr_card.html" %}
-        {% endfor %}
-    </div>
-</section>
+    {% endfor %}
 {% else %}
-<section class="board-section">
-    <h3 class="section-header section-suggestions">Suggestions</h3>
-    <p class="empty-state">No suggestions right now. Check back after the next scan.</p>
-</section>
+    <p class="empty-state">No PRs you're reviewing or commenting on right now.</p>
 {% endif %}
+</div>
+
+{# === MY PRs TAB === #}
+<div class="board-tab-content" id="tab-my-prs">
+{% if board.my_pr_groups %}
+    {% for label, items in board.my_pr_groups %}
+    <div class="activity-group">
+        <div class="activity-divider">
+            <span class="activity-divider-label">{{ label }}</span>
+        </div>
+        <div class="card-list">
+            {% for item in items %}
+            {% set pr = item %}
+            {% set pr_detail_url = "/board/" ~ board.github_username ~ "/pr/" ~ item.repo ~ "/" ~ item.number %}
+            {% include "shared/_pr_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p class="empty-state">You don't have any open PRs right now.</p>
+{% endif %}
+</div>
+
+{# === OTHER OPEN PRs TAB === #}
+<div class="board-tab-content" id="tab-other">
+{% if board.other_groups %}
+    {% for label, items in board.other_groups %}
+    <div class="activity-group">
+        <div class="activity-divider">
+            <span class="activity-divider-label">{{ label }}</span>
+        </div>
+        <div class="card-list">
+            {% for item in items %}
+            {% set pr = item %}
+            {% set pr_detail_url = "/board/" ~ board.github_username ~ "/pr/" ~ item.repo ~ "/" ~ item.number %}
+            {% include "shared/_pr_card.html" %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p class="empty-state">No other open PRs right now.</p>
+{% endif %}
+</div>
+
+<script>
+document.querySelectorAll('.board-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.board-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.board-tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+</script>
 {% endblock %}

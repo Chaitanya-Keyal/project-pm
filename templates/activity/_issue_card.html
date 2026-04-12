@@ -1,0 +1,51 @@
+<div class="card feed-card feed-card-issue">
+    <div class="card-header">
+        <div class="card-title-row">
+            <a href="{{ item.detail_url }}" class="card-title">{{ item.title }}</a>
+            {% if item.repo and item.number %}
+            <a href="https://github.com/{{ item.repo }}/issues/{{ item.number }}" target="_blank" rel="noopener" class="card-gh-icon" title="Open on GitHub">&nearr;</a>
+            {% endif %}
+        </div>
+        <div class="card-meta">
+            {% if item.author %}
+            <img src="https://github.com/{{ item.author }}.png?size=40" alt="" class="avatar avatar-sm">
+            <span>{{ item.author }}</span>
+            <span class="card-sep">&middot;</span>
+            {% endif %}
+            <span class="card-repo">{{ item.short_repo }}</span>
+            <span class="card-badges">
+                <span class="badge badge-source badge-source-issue">Issue</span>
+                {% if item.tier is not none %}
+                <span class="badge badge-tier badge-tier-{{ item.tier }}">Tier {{ item.tier }}</span>
+                {% endif %}
+                {% if item.category %}
+                <span class="badge badge-complexity">{{ item.category | replace('_', ' ') }}</span>
+                {% endif %}
+                {% if item.discussion_state %}
+                <span class="badge badge-discussion-{{ item.discussion_state }}">{{ item.discussion_state | replace('_', ' ') }}</span>
+                {% endif %}
+                {% if item.impact %}
+                <span class="badge badge-{{ {"low": "success", "medium": "warning", "high": "danger"}.get(item.impact, "") }}">{{ item.impact }} impact</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="card-timestamps">
+            {% if item.comment_count %}
+            <span>{{ item.comment_count }} comment{{ 's' if item.comment_count != 1 else '' }}</span>
+            <span class="card-sep">&middot;</span>
+            {% endif %}
+            {% if item.updated_at %}
+            <span title="{{ item.updated_at }}">updated {{ item.updated_at | days_ago }}</span>
+            {% endif %}
+            {% if item.created_at %}
+            <span class="card-sep">&middot;</span>
+            <span title="{{ item.created_at }}">opened {{ item.created_at | days_ago }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% if item.summary %}
+    <div class="card-body">
+        <p class="card-description">{{ item.summary }}</p>
+    </div>
+    {% endif %}
+</div>

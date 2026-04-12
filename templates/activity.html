@@ -1,18 +1,56 @@
 {% extends "base.html" %}
 
-{% block title %}Recent Activity — Project PM{% endblock %}
+{% block title %}Activity — Project PM{% endblock %}
 
 {% block content %}
 <div class="activity-page">
-    <h2>Recent Activity</h2>
-    <p class="subtitle">Open pull requests across all repos, sorted by most recent activity.</p>
+    <h2>Activity</h2>
+    <p class="subtitle">Merged PRs, issues, and community discussions across all repos.</p>
 
-    <div
-        hx-get="/activity/cards"
+    <div class="activity-filters">
+        <a href="/activity?type=all"
+           class="filter-pill {% if filter_type == 'all' %}active{% endif %}"
+           hx-get="/activity/cards?type=all"
+           hx-target="#activity-cards"
+           hx-swap="innerHTML">All</a>
+        <a href="/activity?type=prs"
+           class="filter-pill {% if filter_type == 'prs' %}active{% endif %}"
+           hx-get="/activity/cards?type=prs"
+           hx-target="#activity-cards"
+           hx-swap="innerHTML">PRs</a>
+        <a href="/activity?type=issues"
+           class="filter-pill {% if filter_type == 'issues' %}active{% endif %}"
+           hx-get="/activity/cards?type=issues"
+           hx-target="#activity-cards"
+           hx-swap="innerHTML">Issues</a>
+        <a href="/activity?type=telegram"
+           class="filter-pill {% if filter_type == 'telegram' %}active{% endif %}"
+           hx-get="/activity/cards?type=telegram"
+           hx-target="#activity-cards"
+           hx-swap="innerHTML">Telegram</a>
+    </div>
+
+    <div id="activity-cards"
+        hx-get="/activity/cards?type={{ filter_type }}"
         hx-trigger="every 60s"
         hx-swap="innerHTML"
     >
         {% include "activity/_card_list.html" %}
     </div>
 </div>
+
+<script>
+// Update active pill state on HTMX click without full page reload
+document.querySelectorAll('.filter-pill').forEach(pill => {
+    pill.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        // Update the polling URL to match the selected filter
+        const cards = document.getElementById('activity-cards');
+        cards.setAttribute('hx-get', '/activity/cards?type=' + new URL(pill.href, location.origin).searchParams.get('type'));
+        htmx.process(cards);
+        e.preventDefault();
+    });
+});
+</script>
 {% endblock %}

@@ -1,0 +1,24 @@
+<div class="card feed-card feed-card-telegram">
+    <div class="card-header">
+        <div class="card-title-row">
+            <a href="{{ item.detail_url }}" class="card-title">{{ item.title }}</a>
+        </div>
+        <div class="card-meta">
+            <span class="card-badges">
+                <span class="badge badge-source badge-source-telegram">Telegram</span>
+                {% if item.tg_category %}
+                <span class="badge badge-complexity">{{ item.tg_category | replace('_', ' ') }}</span>
+                {% endif %}
+            </span>
+            {% if item.period %}
+            <span class="card-sep">&middot;</span>
+            <span class="card-activity">{{ item.period }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% if item.summary %}
+    <div class="card-body">
+        <p class="card-description">{{ item.summary }}</p>
+    </div>
+    {% endif %}
+</div>

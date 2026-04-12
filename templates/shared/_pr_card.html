@@ -2,7 +2,7 @@
     {% set current_user = request.session.get('github_username', '') %}
     <div class="card-header">
         <div class="card-title-row">
-            <a href="/search/pr/{{ pr.repo }}/{{ pr.number }}" class="card-title">
+            <a href="{{ pr_detail_url }}" class="card-title">
                 PR #{{ pr.number }} — {{ pr.title }}
             </a>
             <a href="https://github.com/{{ pr.repo }}/pull/{{ pr.number }}" target="_blank" rel="noopener" class="card-gh-icon" title="Open on GitHub">&nearr;</a>
@@ -10,22 +10,23 @@
         <div class="card-meta">
             <img src="https://github.com/{{ pr.author }}.png?size=40" alt="" class="avatar avatar-sm">
             <span>{{ pr.author }}</span>
+            {% set short_repo = pr.repo.split('/')[-1] if '/' in pr.repo else pr.repo %}
             {% if pr.repo != "SeedSigner/seedsigner" %}
             <span class="card-sep">&middot;</span>
-            <span class="card-repo">{{ pr.repo.split('/')[-1] }}</span>
+            <span class="card-repo">{{ short_repo }}</span>
             {% endif %}
             <span class="card-badges">
-                {% if current_user and (
-                    pr.author.lower() == current_user.lower()
-                    or (pr.participant_contributions and current_user.lower() in pr.participant_contributions | map(attribute='github_username') | map('lower') | list)
-                ) %}
+                {% if current_user and pr.participant_contributions and current_user.lower() in pr.participant_contributions | map(attribute='github_username') | map('lower') | list %}
                 <span class="badge badge-interacted" title="You've participated in this PR">Involved</span>
+                {% elif current_user and pr.author.lower() == current_user.lower() %}
+                <span class="badge badge-interacted" title="You authored this PR">Involved</span>
                 {% endif %}
                 {% if pr.state %}
                 <span class="badge badge-state badge-state-{{ pr.state }}">{{ pr.state | capitalize }}</span>
                 {% endif %}
-                {% if pr.tier is not none %}
-                <span class="badge badge-tier badge-tier-{{ pr.tier }}">{{ {0: "Trivial", 1: "Straightforward", 2: "Significant", 3: "Complex"}.get(pr.tier, "Unknown") }}</span>
+                {% set tier_val = pr.tier if pr.tier is not none else None %}
+                {% if tier_val is not none %}
+                <span class="badge badge-tier badge-tier-{{ tier_val }}">{{ {0: "Trivial", 1: "Straightforward", 2: "Significant", 3: "Complex"}.get(tier_val, "Unknown") }}</span>
                 {% endif %}
                 {% if pr.risk %}
                 <span class="badge badge-{{ {"low": "success", "medium": "warning", "high": "danger"}.get(pr.risk, "") }}">{{ pr.risk }} risk</span>
@@ -47,10 +48,10 @@
     {% if actionable %}
     <div class="card-pending-actions">
         {% for username, action in actionable %}
-        <div class="pending-action {% if username.lower() == current_user.lower() %}pending-action-you{% endif %}">
+        <div class="pending-action {% if current_user and username.lower() == current_user.lower() %}pending-action-you{% endif %}">
             <img src="https://github.com/{{ username }}.png?size=40" alt="" class="avatar avatar-xs">
             <span class="pending-action-text">
-                {% if username.lower() == current_user.lower() %}
+                {% if current_user and username.lower() == current_user.lower() %}
                 <strong>You</strong>
                 {% else %}
                 <strong>{{ username }}</strong>
@@ -62,7 +63,7 @@
     </div>
     {% endif %}
     {% endif %}
-    {% set parts = pr.summary | split_summary %}
+    {% set parts = pr.summary | split_summary if pr.summary else {"description": "", "updates": []} %}
     {% if parts.description %}
     <div class="card-body">
         <p class="card-description">{{ parts.description }}</p>

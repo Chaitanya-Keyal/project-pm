@@ -307,6 +307,64 @@ button, .btn {
 }
 
 /* Board sections */
+/* Board tabs */
+.board-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.board-tab {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.6rem 1.25rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tab-latest {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.board-tab:hover {
+    color: var(--text-primary);
+}
+
+.board-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.board-tab.active .tab-latest {
+    color: var(--text-secondary);
+}
+
+.board-tab-content {
+    display: none;
+}
+
+.board-tab-content.active {
+    display: block;
+}
+
 .board-section {
     margin-bottom: 2rem;
 }
@@ -330,9 +388,6 @@ button, .btn {
     border-bottom-color: var(--warning);
 }
 
-.section-suggestions {
-    border-bottom-color: var(--accent);
-}
 
 .section-count {
     font-size: 0.8rem;
@@ -429,6 +484,11 @@ button, .btn {
 
 .card-sep {
     color: var(--text-muted);
+}
+
+.card-activity {
+    color: var(--text-muted);
+    font-size: 0.8rem;
 }
 
 .card-body {
@@ -1223,7 +1283,55 @@ button, .btn {
 
 .activity-page .subtitle {
     color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+/* Filter pills */
+.activity-filters {
+    display: flex;
+    gap: 0.5rem;
     margin-bottom: 1.5rem;
+}
+
+.filter-pill {
+    padding: 0.35rem 0.9rem;
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.filter-pill:hover {
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+}
+
+.filter-pill.active {
+    color: var(--accent);
+    background: rgba(88, 166, 255, 0.1);
+    border-color: var(--accent);
+}
+
+/* Feed card type accents */
+.feed-card-pr_merged {
+    border-left: 3px solid #a371f7;
+}
+
+.feed-card-pr_closed {
+    border-left: 3px solid #f85149;
+}
+
+.feed-card-issue {
+    border-left: 3px solid #3fb950;
+}
+
+.feed-card-telegram {
+    border-left: 3px solid #2aabee;
 }
 
 .card-timestamps {

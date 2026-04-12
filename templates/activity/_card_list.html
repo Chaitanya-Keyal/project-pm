@@ -1,16 +1,22 @@
 {% if groups %}
-{% for label, prs in groups %}
+{% for label, items in groups %}
 <div class="activity-group">
     <div class="activity-divider">
         <span class="activity-divider-label">{{ label }}</span>
     </div>
     <div class="card-list">
-        {% for pr in prs %}
-        {% include "activity/_pr_card.html" %}
+        {% for item in items %}
+            {% if item.item_type in ("pr_merged", "pr_closed") %}
+            {% include "activity/_pr_event_card.html" %}
+            {% elif item.item_type == "issue" %}
+            {% include "activity/_issue_card.html" %}
+            {% elif item.item_type == "telegram" %}
+            {% include "activity/_telegram_card.html" %}
+            {% endif %}
         {% endfor %}
     </div>
 </div>
 {% endfor %}
 {% else %}
-<p class="empty-state">No open pull requests found.</p>
+<p class="empty-state">No recent activity found.</p>
 {% endif %}
