@@ -23,6 +23,7 @@ async def lifespan(app: FastAPI):
     async with pm_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+
     # Initialize Lens client (search, identity, PR data)
     app.state.lens = LensClient(config_dir=settings.lens_config_dir)
 
@@ -114,6 +115,20 @@ def days_ago(date_val) -> str:
 
 app.state.templates.env.filters["days_ago"] = days_ago
 app.state.templates.env.globals["admin_usernames"] = settings.admin_usernames_set
+
+
+from fastapi.responses import RedirectResponse as _Redirect  # noqa: E402
+from project_pm.auth import get_current_user  # noqa: E402
+
+
+@app.get("/")
+async def root(request):
+    """Redirect logged-in users to their board, others to login."""
+    user = get_current_user(request)
+    if user:
+        return _Redirect(url=f"/board/{user['github_username']}", status_code=302)
+    return _Redirect(url="/auth/login", status_code=302)
+
 
 # Static files
 app.mount("/static", StaticFiles(directory=PROJECT_ROOT / "static"), name="static")

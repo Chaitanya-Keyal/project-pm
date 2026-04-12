@@ -94,15 +94,20 @@ async def save_telegram(
             )
         matched_name = found
 
-    # Update contributor record
+    # Update contributor record (auto-create if missing)
     result = await pm_db.execute(
         select(Contributor).where(Contributor.github_username == github_username)
     )
     contributor = result.scalar_one_or_none()
-    if contributor:
-        contributor.telegram_display_name = matched_name
-        contributor.telegram_confirmed = True
-        await pm_db.commit()
+    if not contributor:
+        contributor = Contributor(
+            github_username=github_username,
+            display_name=github_username,
+        )
+        pm_db.add(contributor)
+    contributor.telegram_display_name = matched_name
+    contributor.telegram_confirmed = True
+    await pm_db.commit()
 
     # Redirect to stored next URL or home
     next_url = request.session.pop("post_profile_next", "/")

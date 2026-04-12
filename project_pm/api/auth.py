@@ -20,7 +20,9 @@ GITHUB_USER_URL = "https://api.github.com/user"
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, next: str = "/"):
-    """Show login page."""
+    """Show login page, or redirect home if already logged in."""
+    if request.session.get("github_username"):
+        return RedirectResponse(url=next, status_code=302)
     templates = request.app.state.templates
     return templates.TemplateResponse(
         request=request,
@@ -105,7 +107,7 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
     request.session["github_username"] = github_username
     request.session["github_avatar_url"] = avatar_url
 
-    # Check if first login (needs Telegram confirmation)
+    # Auto-create Contributor record on first login (for Telegram linking)
     next_url = request.session.pop("oauth_next", "/")
 
     async with get_pm_db_context() as pm_db:
@@ -113,7 +115,15 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
             select(Contributor).where(Contributor.github_username == github_username)
         )
         contributor = result.scalar_one_or_none()
-        if contributor and not contributor.telegram_confirmed:
+        if not contributor:
+            contributor = Contributor(
+                github_username=github_username,
+                display_name=github_username,
+            )
+            pm_db.add(contributor)
+            await pm_db.commit()
+
+        if not contributor.telegram_confirmed:
             request.session["post_profile_next"] = next_url
             return RedirectResponse(url="/profile")
 

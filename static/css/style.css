@@ -158,6 +158,14 @@ tr:hover {
     border: 1px solid rgba(88, 166, 255, 0.3);
 }
 
+.badge-interacted {
+    background-color: rgba(88, 166, 255, 0.10);
+    color: var(--accent);
+    border: 1px solid rgba(88, 166, 255, 0.25);
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
 /* Buttons */
 button, .btn {
     font-family: var(--font-sans);
@@ -217,6 +225,47 @@ button, .btn {
 .stat-zero {
     color: var(--text-muted);
 }
+
+.stat-tier-none {
+    color: var(--text-muted);
+}
+
+.stat-tier-low {
+    color: var(--text-secondary);
+}
+
+.stat-tier-moderate {
+    color: var(--warning);
+}
+
+.stat-tier-high {
+    color: var(--success);
+    font-weight: 600;
+}
+
+/* Contributor tier groups */
+.contributor-tier-group {
+    margin-bottom: 2.5rem;
+}
+
+.contributor-tier-group:first-child .section-header {
+    margin-top: 0;
+}
+
+.contributor-tier-group .section-header {
+    margin-top: 0;
+}
+
+.contributors-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.contributors-table .col-stat {
+    width: 5.5rem;
+    text-align: left;
+}
+
 
 /* Page title bar */
 .page-title {

@@ -2,15 +2,10 @@
 
 from urllib.parse import quote
 
-from fastapi import Depends, Request
-from fastapi.responses import RedirectResponse
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Request
 from starlette.exceptions import HTTPException
 
 from project_pm.config import settings
-from project_pm.database import get_pm_db
-from project_pm.models.contributor import Contributor
 
 
 class LoginRequiredError(HTTPException):
@@ -49,20 +44,12 @@ def require_admin(request: Request) -> dict:
     return user
 
 
-async def require_board_access(
+def require_board_access(
     request: Request,
     github_username: str,
-    pm_db: AsyncSession = Depends(get_pm_db),
-) -> Contributor:
-    """Require login + (username match OR admin). Returns the Contributor record."""
+) -> str:
+    """Require login + (username match OR admin). Returns the github_username."""
     user = require_login(request)
     if user["github_username"].lower() != github_username.lower() and not user["is_admin"]:
         raise HTTPException(status_code=403, detail="Access denied")
-
-    result = await pm_db.execute(
-        select(Contributor).where(Contributor.github_username == github_username)
-    )
-    contributor = result.scalar_one_or_none()
-    if not contributor:
-        raise HTTPException(status_code=404, detail="Board not found")
-    return contributor
+    return github_username

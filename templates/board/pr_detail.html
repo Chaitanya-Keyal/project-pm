@@ -2,15 +2,11 @@
 
 {% block title %}PR #{{ detail.number }} — {{ detail.title }} — Project PM{% endblock %}
 
-{% block nav %}
-<a href="/board/{{ contributor.github_username }}">My Board</a>
-{% endblock %}
-
 {% block content %}
 <div class="detail-page">
 
     {# === BACK LINK === #}
-    <a href="/board/{{ contributor.github_username }}" class="detail-back">&larr; Back to board</a>
+    <a href="/board/{{ github_username }}" class="detail-back">&larr; Back to board</a>
 
     {# === HEADER === #}
     <div class="detail-header">

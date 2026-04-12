@@ -12,7 +12,6 @@ class Contributor(Base):
     github_username: Mapped[str] = mapped_column(String(100), primary_key=True)
     display_name: Mapped[str] = mapped_column(String(200), nullable=False)
     role: Mapped[str | None] = mapped_column(String(50), nullable=True)
-    auth_token: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     telegram_user_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     telegram_chat_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     telegram_display_name: Mapped[str | None] = mapped_column(String(200), nullable=True)

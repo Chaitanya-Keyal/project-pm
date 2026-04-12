@@ -1,4 +1,5 @@
 <div class="card">
+    {% set current_user = request.session.get('github_username', '') %}
     <div class="card-header">
         <div class="card-title-row">
             <a href="/search/pr/{{ pr.repo }}/{{ pr.number }}" class="card-title">
@@ -14,6 +15,12 @@
             <span class="card-repo">{{ pr.repo.split('/')[-1] }}</span>
             {% endif %}
             <span class="card-badges">
+                {% if current_user and (
+                    pr.author.lower() == current_user.lower()
+                    or (pr.participant_contributions and current_user.lower() in pr.participant_contributions | map(attribute='github_username') | map('lower') | list)
+                ) %}
+                <span class="badge badge-interacted" title="You've participated in this PR">Involved</span>
+                {% endif %}
                 {% if pr.state %}
                 <span class="badge badge-state badge-state-{{ pr.state }}">{{ pr.state | capitalize }}</span>
                 {% endif %}
@@ -39,7 +46,6 @@
     {% set actionable = pr.pending_actions | dictsort | selectattr('1.open_items') | list %}
     {% if actionable %}
     <div class="card-pending-actions">
-        {% set current_user = request.session.get('github_username', '') %}
         {% for username, action in actionable %}
         <div class="pending-action {% if username.lower() == current_user.lower() %}pending-action-you{% endif %}">
             <img src="https://github.com/{{ username }}.png?size=40" alt="" class="avatar avatar-xs">

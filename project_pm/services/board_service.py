@@ -5,8 +5,6 @@ from datetime import datetime
 
 from project_lens import LensClient, PRDetail as LensPRDetail, PRWithAssessment
 
-from project_pm.models.contributor import Contributor
-
 
 TIER_LABELS = {0: "Trivial", 1: "Straightforward", 2: "Significant", 3: "Complex"}
 
@@ -157,7 +155,8 @@ class DetailView:
 class Board:
     """The complete board state for a contributor."""
 
-    contributor: Contributor
+    github_username: str
+    role: str | None = None
     action_needed: list[BoardItem] = field(default_factory=list)
     watching: list[BoardItem] = field(default_factory=list)
     suggestions: list[BoardItem] = field(default_factory=list)
@@ -193,11 +192,10 @@ def _to_board_item(pr: PRWithAssessment) -> BoardItem:
     )
 
 
-async def build_board(lens: LensClient, contributor: Contributor) -> Board:
+async def build_board(lens: LensClient, github_username: str, role: str | None = None) -> Board:
     """Assemble a contributor's board from Lens data and PM task state."""
-    board = Board(contributor=contributor)
-    username = contributor.github_username
-    role = contributor.role
+    board = Board(github_username=github_username, role=role)
+    username = github_username
 
     open_prs = await lens.get_open_prs_with_assessments()
 
@@ -213,7 +211,7 @@ async def build_pr_detail(
     lens: LensClient,
     repo: str,
     number: int,
-    contributor: Contributor | None = None,
+    github_username: str | None = None,
 ) -> DetailView | None:
     """Fetch full PR detail from Lens, optionally personalized to a viewer."""
     pr = await lens.get_pr_detail(repo, number)
@@ -249,8 +247,8 @@ async def build_pr_detail(
 
     # Viewer-specific actions (only when viewing from a board)
     viewer_actions = None
-    if contributor and pr.pending_actions and isinstance(pr.pending_actions, dict):
-        viewer_actions = pr.pending_actions.get(contributor.github_username)
+    if github_username and pr.pending_actions and isinstance(pr.pending_actions, dict):
+        viewer_actions = pr.pending_actions.get(github_username)
 
     return DetailView(
         repo=pr.repo,

@@ -71,9 +71,9 @@ async def _get_grouped_prs(lens: LensClient):
     return _group_by_recency(prs)
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/activity", response_class=HTMLResponse)
 async def activity_page(request: Request, user: dict = Depends(require_login)):
-    """Home page — all open PRs sorted by most recent activity."""
+    """Activity page — all open PRs sorted by most recent activity."""
     templates = request.app.state.templates
     lens = request.app.state.lens
     groups = await _get_grouped_prs(lens)

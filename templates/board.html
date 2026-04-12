@@ -1,17 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ board.contributor.display_name }} — Project PM{% endblock %}
-
-{% block nav %}
-<a href="/board/{{ board.contributor.github_username }}">My Board</a>
-{% endblock %}
+{% block title %}{{ board.github_username }} — Project PM{% endblock %}
 
 {% block content %}
 <div class="page-title">
     <div>
-        <h2>{{ board.contributor.display_name }}'s Board</h2>
-        {% if board.contributor.role %}
-        <p class="subtitle">{{ board.contributor.role | replace('_', ' ') | title }}</p>
+        <h2>{{ board.github_username }}'s Board</h2>
+        {% if board.role %}
+        <p class="subtitle">{{ board.role | replace('_', ' ') | title }}</p>
         {% endif %}
     </div>
 </div>

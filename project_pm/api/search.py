@@ -97,6 +97,29 @@ async def _enrich_issue_titles(
     return id_titles
 
 
+async def _enrich_pr_participants(
+    results: list[SearchResult], lens: LensClient,
+) -> dict[str, set[str]]:
+    """Fetch participant usernames for PR results. Returns {result.id: set_of_usernames}."""
+    pr_keys = [
+        (r.metadata.get("repo"), r.metadata.get("pr_number"))
+        for r in results
+        if r.source_type == "pr_assessment"
+        and r.metadata.get("repo")
+        and r.metadata.get("pr_number")
+    ]
+    if not pr_keys:
+        return {}
+    participant_map = await lens.get_pr_participants(pr_keys)
+    id_participants: dict[str, set[str]] = {}
+    for r in results:
+        if r.source_type == "pr_assessment":
+            key = (r.metadata.get("repo"), r.metadata.get("pr_number"))
+            if key in participant_map:
+                id_participants[r.id] = participant_map[key]
+    return id_participants
+
+
 @router.get("/search", response_class=HTMLResponse)
 async def search_page(request: Request, q: str = "", user: dict = Depends(require_login)):
     """Full search page — renders form + results."""
@@ -105,6 +128,7 @@ async def search_page(request: Request, q: str = "", user: dict = Depends(requir
     results = []
     pr_titles = {}
     issue_titles = {}
+    pr_participants = {}
     error = None
     include_prs, include_issues, include_telegram = _parse_filters(request)
 
@@ -114,6 +138,7 @@ async def search_page(request: Request, q: str = "", user: dict = Depends(requir
             results = await lens.search(q.strip(), n_results=15, collections=cols)
             pr_titles = await _enrich_pr_titles(results, lens)
             issue_titles = await _enrich_issue_titles(results, lens)
+            pr_participants = await _enrich_pr_participants(results, lens)
         except Exception as exc:
             error = str(exc)
             logger.warning("Search unavailable: %s", error)
@@ -126,6 +151,7 @@ async def search_page(request: Request, q: str = "", user: dict = Depends(requir
             "results": results,
             "pr_titles": pr_titles,
             "issue_titles": issue_titles,
+            "pr_participants": pr_participants,
             "error": error,
             "include_prs": include_prs,
             "include_issues": include_issues,
@@ -142,6 +168,7 @@ async def search_results_partial(request: Request, q: str = "", user: dict = Dep
     results = []
     pr_titles = {}
     issue_titles = {}
+    pr_participants = {}
     error = None
     include_prs, include_issues, include_telegram = _parse_filters(request)
 
@@ -151,13 +178,14 @@ async def search_results_partial(request: Request, q: str = "", user: dict = Dep
             results = await lens.search(q.strip(), n_results=15, collections=cols)
             pr_titles = await _enrich_pr_titles(results, lens)
             issue_titles = await _enrich_issue_titles(results, lens)
+            pr_participants = await _enrich_pr_participants(results, lens)
         except Exception as exc:
             error = str(exc)
 
     return templates.TemplateResponse(
         request=request,
         name="search/_results.html",
-        context={"q": q, "results": results, "pr_titles": pr_titles, "issue_titles": issue_titles, "error": error},
+        context={"q": q, "results": results, "pr_titles": pr_titles, "issue_titles": issue_titles, "pr_participants": pr_participants, "error": error},
     )
 
 
@@ -349,6 +377,7 @@ async def related_context(
     results = []
     pr_titles = {}
     issue_titles = {}
+    pr_participants = {}
     error = None
     repo = f"{repo_owner}/{repo_name}"
 
@@ -363,6 +392,7 @@ async def related_context(
             results = await lens.search_related(query, exclude_id=exclude_id, n_results=5)
             pr_titles = await _enrich_pr_titles(results, lens)
             issue_titles = await _enrich_issue_titles(results, lens)
+            pr_participants = await _enrich_pr_participants(results, lens)
         except Exception as exc:
             error = str(exc)
             logger.warning("Related context search unavailable: %s", error)
@@ -370,5 +400,5 @@ async def related_context(
     return templates.TemplateResponse(
         request=request,
         name="search/_pr_context.html",
-        context={"results": results, "pr_titles": pr_titles, "issue_titles": issue_titles, "error": error},
+        context={"results": results, "pr_titles": pr_titles, "issue_titles": issue_titles, "pr_participants": pr_participants, "error": error},
     )
