@@ -239,6 +239,13 @@ button, .btn {
 
 .stat-tier-low {
     color: var(--text-secondary);
+}
+
+/* The light-gray "low" tier is only bolded in the Activity (total) column,
+   where it distinguishes Contributors from Minimal Activity in the grouping
+   summary. In per-dimension columns (PRs, Reviews, Comments) it stays at
+   normal weight to avoid visually overloading low-activity rows. */
+.col-activity .stat-tier-low {
     font-weight: 600;
 }
 
