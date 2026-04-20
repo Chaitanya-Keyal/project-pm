@@ -239,14 +239,17 @@ button, .btn {
 
 .stat-tier-low {
     color: var(--text-secondary);
+    font-weight: 600;
 }
 
 .stat-tier-regular {
     color: var(--notice);
+    font-weight: 600;
 }
 
 .stat-tier-moderate {
     color: var(--warning);
+    font-weight: 600;
 }
 
 .stat-tier-high {
