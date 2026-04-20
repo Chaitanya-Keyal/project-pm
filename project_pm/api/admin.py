@@ -18,10 +18,11 @@ async def contributors_page(
     lens = request.app.state.lens
     contributors = await discover_contributors(lens, pm_db)
     groups = [
-        ("Key Contributors", [c for c in contributors if c.group_tier == "high"]),
-        ("Notable Contributors", [c for c in contributors if c.group_tier == "moderate"]),
-        ("Contributors", [c for c in contributors if c.group_tier == "low"]),
-        ("Minimal Activity", [c for c in contributors if c.group_tier == "none"]),
+        ("Key Contributors",         [c for c in contributors if c.group_tier == "high"]),
+        ("Significant Contributors", [c for c in contributors if c.group_tier == "moderate"]),
+        ("Notable Contributors",     [c for c in contributors if c.group_tier == "regular"]),
+        ("Contributors",             [c for c in contributors if c.group_tier == "low"]),
+        ("Minimal Activity",         [c for c in contributors if c.group_tier == "none"]),
     ]
     # Drop empty groups
     groups = [(label, members) for label, members in groups if members]

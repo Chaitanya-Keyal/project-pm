@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Project PM{% endblock %}</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=16">
+    <link rel="stylesheet" href="/static/css/style.css?v=17">
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 </head>
 <body>
@@ -16,7 +16,7 @@
                 <a href="/board/{{ request.session['github_username'] }}">My Board</a>
                 <a href="/activity">Activity</a>
                 {% endif %}
-                <a href="/search">Search</a>
+                <a href="/search"{% if request.url.path.startswith('/search') %} class="nav-active"{% endif %}>Search</a>
                 {% if request.session.get('github_username') and request.session.get('github_username').lower() in admin_usernames %}
                 <a href="/admin/contributors">Admin</a>
                 {% endif %}

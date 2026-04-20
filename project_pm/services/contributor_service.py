@@ -25,22 +25,9 @@ class DiscoveredContributor:
     merge_tier: str = "none"
     pr_tier: str = "none"
     review_tier: str = "none"
-
-    @property
-    def total_activity(self) -> int:
-        return self.pr_count + self.review_count + self.comment_count
-
-    @property
-    def group_tier(self) -> str:
-        """Contributor grouping based on highest tier across all categories."""
-        tiers = {self.merge_tier, self.pr_tier, self.review_tier}
-        if "high" in tiers:
-            return "high"
-        if "moderate" in tiers:
-            return "moderate"
-        if "low" in tiers:
-            return "low"
-        return "none"
+    total_tier: str = "none"
+    group_tier: str = "none"
+    total_activity: int = 0
 
 
 async def discover_contributors(
@@ -61,6 +48,9 @@ async def discover_contributors(
             merge_tier=c.merge_tier,
             pr_tier=c.pr_tier,
             review_tier=c.review_tier,
+            total_tier=c.total_tier,
+            group_tier=c.group_tier,
+            total_activity=c.total_activity,
         )
         for c in lens_contributors
     ]
