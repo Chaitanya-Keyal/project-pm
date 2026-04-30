@@ -141,6 +141,7 @@ static/css/            Dark theme stylesheet
 - All Lens data access goes through `LensClient` -- PM never queries Lens's database directly.
 - Authentication gates on Lens activity -- if you have project contributions recorded in Lens, you can sign in.
 - Admin designation is config-based (`ADMIN_GITHUB_USERNAMES`), not stored in the database.
+- **Contributor `total_activity` mirrors Lens, not PM.** The Activity column on the admin contributors table is passed through from `ContributorActivity.total_activity` (computed in Lens as `merge_commits + prs_merged + total_review_engagement`) so the number shown matches the value Lens used to compute tier thresholds -- the color and number can never disagree. For maintainers, Activity is larger than the sum of the visible columns (PRs + Code Reviews + Comments) by their merge-commit count, since merge commits aren't currently displayed as a column.
 
 ---
 
@@ -218,3 +219,7 @@ Dashboard banners for recurring events, deadlines, and time-sensitive informatio
 - Release notes drafted from merged PRs + contributor census + review credit
 - Call prep generation
 - Contribution history pages showing complete per-person record
+
+### Personal To-Do List Integration
+
+Surface the user's personal to-do list (e.g., `KEITH_TODO.md` for kdmukai) on their board alongside project-sourced Action Needed / Watching items. The goal is a single place to see both cross-project personal tasks and the per-project surface PM already builds. Source format and sync mechanism TBD — likely a configurable path per user, parsed from markdown checkboxes. Should coexist with future ingestion of per-repo `.claude/handoff.md` "next up" items.
