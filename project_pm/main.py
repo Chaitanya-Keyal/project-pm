@@ -88,7 +88,7 @@ from datetime import datetime, timezone  # noqa: E402
 
 
 def days_ago(date_val) -> str:
-    """Convert a date string or datetime to 'N days ago' / 'today' / 'yesterday'."""
+    """Convert a date string or datetime to a human-friendly relative time."""
     if not date_val:
         return ""
     try:
@@ -99,10 +99,16 @@ def days_ago(date_val) -> str:
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         delta = datetime.now(timezone.utc) - dt
+        total_seconds = int(delta.total_seconds())
+        if total_seconds < 0:
+            return "just now"
+        hours = total_seconds // 3600
+        if hours < 1:
+            return "just now"
+        if hours < 24:
+            return f"{hours} hour{'s' if hours != 1 else ''} ago"
         days = delta.days
-        if days == 0:
-            return "today"
-        elif days == 1:
+        if days == 1:
             return "yesterday"
         elif days < 30:
             return f"{days} days ago"
