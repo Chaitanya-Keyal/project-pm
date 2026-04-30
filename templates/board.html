@@ -60,8 +60,8 @@
         <div class="card-list">
             {% for item in items %}
             {% set pr = item %}
-            {% set pr_detail_url = "/board/" ~ board.github_username ~ "/pr/" ~ item.repo ~ "/" ~ item.number %}
-            {% include "shared/_pr_card.html" %}
+            {% set detail_url = "/board/" ~ board.github_username ~ "/pr/" ~ item.repo ~ "/" ~ item.number %}
+            {% include "cards/_pr_card.html" %}
             {% endfor %}
         </div>
     </div>
@@ -82,8 +82,8 @@
         <div class="card-list">
             {% for item in items %}
             {% set pr = item %}
-            {% set pr_detail_url = "/board/" ~ board.github_username ~ "/pr/" ~ item.repo ~ "/" ~ item.number %}
-            {% include "shared/_pr_card.html" %}
+            {% set detail_url = "/board/" ~ board.github_username ~ "/pr/" ~ item.repo ~ "/" ~ item.number %}
+            {% include "cards/_pr_card.html" %}
             {% endfor %}
         </div>
     </div>
@@ -104,8 +104,8 @@
         <div class="card-list">
             {% for item in items %}
             {% set pr = item %}
-            {% set pr_detail_url = "/board/" ~ board.github_username ~ "/pr/" ~ item.repo ~ "/" ~ item.number %}
-            {% include "shared/_pr_card.html" %}
+            {% set detail_url = "/board/" ~ board.github_username ~ "/pr/" ~ item.repo ~ "/" ~ item.number %}
+            {% include "cards/_pr_card.html" %}
             {% endfor %}
         </div>
     </div>

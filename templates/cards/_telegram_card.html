@@ -1,0 +1,33 @@
+{# Unified Telegram card — works for activity feed and search hits.
+   Required:  tg — object/dict exposing: chroma_id, topic, summary, category, period
+   Optional:  score — search relevance (0..1)
+#}
+{% set detail_url = '/search/telegram/' ~ tg.chroma_id %}
+<div class="card">
+    <div class="card-header">
+        <div class="card-title-row">
+            <a href="{{ detail_url }}" class="card-title">{{ tg.topic or "Telegram Discussion" }}</a>
+            {% if score is defined and score is not none %}
+            <span class="card-score">{{ "%.0f"|format(score * 100) }}%</span>
+            {% endif %}
+        </div>
+        <div class="card-meta">
+            <span class="card-badges">
+                <span class="badge badge-source badge-source-telegram">Telegram</span>
+                {% if tg.category %}
+                <span class="badge badge-complexity">{{ tg.category | replace('_', ' ') }}</span>
+                {% endif %}
+            </span>
+        </div>
+        {% if tg.period %}
+        <div class="card-timestamps">
+            <span>{{ tg.period }}</span>
+        </div>
+        {% endif %}
+    </div>
+    {% if tg.summary %}
+    <div class="card-body">
+        <p class="card-description">{{ tg.summary }}</p>
+    </div>
+    {% endif %}
+</div>

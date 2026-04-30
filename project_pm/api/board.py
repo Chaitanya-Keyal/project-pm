@@ -51,16 +51,17 @@ async def pr_detail_page(
 ):
     lens = request.app.state.lens
     repo = f"{repo_owner}/{repo_name}"
-    detail = await build_pr_detail(lens, repo, pr_number, github_username=github_username)
+    detail = await build_pr_detail(lens, repo, pr_number)
     if not detail:
         raise HTTPException(status_code=404, detail="PR not found")
 
     templates = request.app.state.templates
     return templates.TemplateResponse(
         request=request,
-        name="board/pr_detail.html",
+        name="pr_detail.html",
         context={
             "detail": detail,
-            "github_username": github_username,
+            "back_url": f"/board/{github_username}",
+            "back_label": "Back to board",
         },
     )

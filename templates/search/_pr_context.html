@@ -1,45 +1,21 @@
 {% if error %}
 <p class="empty-state">Context search unavailable</p>
 {% elif results %}
-{% set current_user = request.session.get('github_username', '') %}
-<div class="related-context-list">
+<div class="card-list">
     {% for r in results %}
-    {% if r.source_type == "pr_assessment" %}
-    <a href="/search/pr/{{ r.metadata.repo }}/{{ r.metadata.pr_number }}" class="related-context-item related-context-link">
-    {% elif r.source_type == "issue_assessment" %}
-    <a href="/search/issue/{{ r.metadata.repo }}/{{ r.metadata.issue_number }}" class="related-context-item related-context-link">
-    {% else %}
-    <a href="/search/telegram/{{ r.id }}" class="related-context-item related-context-link">
-    {% endif %}
-        <div class="related-context-header">
-            {% if r.source_type == "pr_assessment" %}
-            <span class="badge badge-source badge-source-pr">PR</span>
-            <span class="related-context-ref">{{ r.metadata.repo }}#{{ r.metadata.pr_number }}</span>
-            {% if pr_titles.get(r.id) %}
-            <span class="related-context-title">{{ pr_titles[r.id] }}</span>
-            {% endif %}
-            {% if current_user and pr_participants.get(r.id) and current_user.lower() in pr_participants[r.id] %}
-            <span class="badge badge-interacted" title="You've participated in this PR">Involved</span>
-            {% endif %}
-            {% elif r.source_type == "issue_assessment" %}
-            <span class="badge badge-source badge-source-issue">Issue</span>
-            <span class="related-context-ref">{{ r.metadata.repo }}#{{ r.metadata.issue_number }}</span>
-            {% if issue_titles.get(r.id) %}
-            <span class="related-context-title">{{ issue_titles[r.id] }}</span>
-            {% endif %}
-            {% else %}
-            <span class="badge badge-source badge-source-telegram">Telegram</span>
-            {% if r.metadata.topic %}
-            <span class="related-context-title">{{ r.metadata.topic }}</span>
-            {% endif %}
-            {% if r.metadata.period %}
-            <span class="related-context-ref">{{ r.metadata.period }}</span>
-            {% endif %}
-            {% endif %}
-            <span class="search-result-score">{{ "%.0f"|format(r.score * 100) }}%</span>
-        </div>
-        <p class="related-context-text">{{ r.text[:300] }}{% if r.text|length > 300 %}...{% endif %}</p>
-    </a>
+        {% if r.source_type == "pr_assessment" and prs_by_id.get(r.id) %}
+            {% set pr = prs_by_id[r.id] %}
+            {% set score = r.score %}
+            {% include "cards/_pr_card.html" %}
+        {% elif r.source_type == "issue_assessment" and issues_by_id.get(r.id) %}
+            {% set issue = issues_by_id[r.id] %}
+            {% set score = r.score %}
+            {% include "cards/_issue_card.html" %}
+        {% elif r.source_type == "telegram_thread" and telegram_by_id.get(r.id) %}
+            {% set tg = telegram_by_id[r.id] %}
+            {% set score = r.score %}
+            {% include "cards/_telegram_card.html" %}
+        {% endif %}
     {% endfor %}
 </div>
 {% else %}

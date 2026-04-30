@@ -2,11 +2,16 @@
 
 {% block title %}PR #{{ detail.number }} — {{ detail.title }} — Project PM{% endblock %}
 
+{% block nav %}
+<a href="/search">Search</a>
+{% endblock %}
+
 {% block content %}
+{% set session_user = request.session.get('github_username', '') %}
 <div class="detail-page">
 
     {# === BACK LINK === #}
-    <a href="/board/{{ github_username }}" class="detail-back">&larr; Back to board</a>
+    <a href="{{ back_url | default('javascript:history.back()') }}" class="detail-back">&larr; {{ back_label | default('Back') }}</a>
 
     {# === HEADER === #}
     <div class="detail-header">
@@ -25,7 +30,13 @@
             {% endif %}
             {% if detail.updated_at %}
             <span class="card-sep">&middot;</span>
-            <span title="{{ detail.updated_at }}">last activity {{ detail.updated_at | days_ago }}</span>
+            <span title="{{ detail.updated_at }}">last activity {{ detail.updated_at | days_ago }}{% if detail.last_actor %}:{% endif %}</span>
+            {% if detail.last_actor %}
+            <span class="detail-last-actor" title="{{ detail.last_actor.at }}">
+                <img src="https://github.com/{{ detail.last_actor.username }}.png?size=40" alt="" class="avatar avatar-xs">
+                {{ detail.last_actor.username }} {{ detail.last_actor.action }}
+            </span>
+            {% endif %}
             {% endif %}
         </div>
     </div>
@@ -61,17 +72,45 @@
     </div>
     {% endif %}
 
-    {# === YOUR ACTION ITEMS === #}
-    {% if detail.has_viewer_actions %}
+    {# === PENDING ACTIONS — viewer's entry first, then everyone else === #}
+    {% if detail.pending_actions %}
     <div class="detail-action-box">
-        <h3>Your Action Items</h3>
-        {% if detail.viewer_actions.open_items > 1 %}
-        <p class="action-count">{{ detail.viewer_actions.open_items }} items on your plate</p>
+        <h3>Pending Actions</h3>
+        {% set ordered = namespace(keys=[]) %}
+        {% if session_user %}
+            {% for u in detail.pending_actions.keys() %}
+                {% if u.lower() == session_user.lower() %}
+                    {% set ordered.keys = ordered.keys + [u] %}
+                {% endif %}
+            {% endfor %}
         {% endif %}
-        <p class="action-summary">{{ detail.viewer_actions.summary }}</p>
-        {% if detail.viewer_actions.last_activity_at %}
-        <p class="action-last-activity" title="{{ detail.viewer_actions.last_activity_at[:19] }}">Last activity: {{ detail.viewer_actions.last_activity_at | days_ago }}</p>
-        {% endif %}
+        {% for u in detail.pending_actions.keys() %}
+            {% if u not in ordered.keys %}
+                {% set ordered.keys = ordered.keys + [u] %}
+            {% endif %}
+        {% endfor %}
+        {% for username in ordered.keys %}
+        {% set actions = detail.pending_actions[username] %}
+        {% set is_you = session_user and username.lower() == session_user.lower() %}
+        <div class="action-entry{% if is_you %} action-entry-you{% endif %}{% if not loop.last %} action-entry-border{% endif %}">
+            <div class="action-entry-header">
+                <img src="https://github.com/{{ username }}.png?size=40" alt="" class="avatar avatar-sm">
+                <span class="action-entry-name">{% if is_you %}You ({{ username }}){% else %}{{ username }}{% endif %}</span>
+                {% if actions.role %}
+                <span class="badge badge-role">{{ actions.role | replace('_', ' ') }}</span>
+                {% endif %}
+                {% if actions.open_items and actions.open_items > 1 %}
+                <span class="action-count">{{ actions.open_items }} items</span>
+                {% endif %}
+            </div>
+            {% if actions.summary %}
+            <p class="action-summary">{{ actions.summary }}</p>
+            {% endif %}
+            {% if actions.last_activity_at %}
+            <p class="action-last-activity" title="{{ actions.last_activity_at[:19] }}">Last activity: {{ actions.last_activity_at | days_ago }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
     </div>
     {% endif %}
 

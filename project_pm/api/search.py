@@ -1,11 +1,18 @@
-"""Search routes — general topic search, Telegram detail, and PR-related context."""
+"""Search routes — general topic search, Telegram detail, and PR/issue detail pages."""
 
 import logging
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
-from project_lens import LensClient, SearchResult
+from project_lens import (
+    IssueWithAssessment,
+    LensClient,
+    PRWithAssessment,
+    SearchResult,
+)
+
+from project_lens.api.telegram import _parse_digest_metadata
 
 from project_pm.auth import require_login
 from project_pm.services.board_service import build_pr_detail
@@ -50,10 +57,10 @@ def _active_collections(include_prs: bool, include_issues: bool, include_telegra
     return cols or None
 
 
-async def _enrich_pr_titles(
-    results: list[SearchResult], lens: LensClient
-) -> dict[str, str]:
-    """Fetch PR titles for PR assessment results. Returns {result.id: title}."""
+async def _enrich_prs_full(
+    results: list[SearchResult], lens: LensClient,
+) -> dict[str, PRWithAssessment]:
+    """Batch-fetch full PR+assessment data for PR search results. Keyed by result.id."""
     pr_keys = [
         (r.metadata.get("repo"), r.metadata.get("pr_number"))
         for r in results
@@ -63,21 +70,43 @@ async def _enrich_pr_titles(
     ]
     if not pr_keys:
         return {}
-    title_map = await lens.get_pr_titles(pr_keys)
-    # Re-key by result ID for template lookup
-    id_titles = {}
+    by_key = await lens.get_prs_by_keys(pr_keys)
+    out: dict[str, PRWithAssessment] = {}
     for r in results:
         if r.source_type == "pr_assessment":
             key = (r.metadata.get("repo"), r.metadata.get("pr_number"))
-            if key in title_map:
-                id_titles[r.id] = title_map[key]
-    return id_titles
+            if key in by_key:
+                out[r.id] = by_key[key]
+    return out
 
 
-async def _enrich_issue_titles(
-    results: list[SearchResult], lens: LensClient
-) -> dict[str, str]:
-    """Fetch issue titles for issue assessment results. Returns {result.id: title}."""
+def _enrich_telegram_cards(results: list[SearchResult]) -> dict[str, dict]:
+    """Normalize telegram search results into card-ready dicts keyed by result.id.
+
+    Parses the raw digest text to strip header lines / bullets and derive a
+    clean narrative summary, matching the shape that TelegramDigestSummary
+    produces for the activity feed.
+    """
+    out: dict[str, dict] = {}
+    for r in results:
+        if r.source_type != "telegram_thread":
+            continue
+        meta = _parse_digest_metadata(r.text or "")
+        md = r.metadata or {}
+        out[r.id] = {
+            "chroma_id": r.id,
+            "topic": meta.get("topic") or md.get("topic") or "",
+            "category": meta.get("category") or md.get("category") or "",
+            "period": meta.get("period") or md.get("period") or "",
+            "summary": meta.get("summary") or "",
+        }
+    return out
+
+
+async def _enrich_issues_full(
+    results: list[SearchResult], lens: LensClient,
+) -> dict[str, IssueWithAssessment]:
+    """Batch-fetch full issue+assessment data for issue search results. Keyed by result.id."""
     issue_keys = [
         (r.metadata.get("repo"), r.metadata.get("issue_number"))
         for r in results
@@ -87,37 +116,36 @@ async def _enrich_issue_titles(
     ]
     if not issue_keys:
         return {}
-    title_map = await lens.get_issue_titles(issue_keys)
-    id_titles = {}
+    by_key = await lens.get_issues_by_keys(issue_keys)
+    out: dict[str, IssueWithAssessment] = {}
     for r in results:
         if r.source_type == "issue_assessment":
             key = (r.metadata.get("repo"), r.metadata.get("issue_number"))
-            if key in title_map:
-                id_titles[r.id] = title_map[key]
-    return id_titles
+            if key in by_key:
+                out[r.id] = by_key[key]
+    return out
 
 
-async def _enrich_pr_participants(
-    results: list[SearchResult], lens: LensClient,
-) -> dict[str, set[str]]:
-    """Fetch participant usernames for PR results. Returns {result.id: set_of_usernames}."""
-    pr_keys = [
-        (r.metadata.get("repo"), r.metadata.get("pr_number"))
-        for r in results
-        if r.source_type == "pr_assessment"
-        and r.metadata.get("repo")
-        and r.metadata.get("pr_number")
-    ]
-    if not pr_keys:
-        return {}
-    participant_map = await lens.get_pr_participants(pr_keys)
-    id_participants: dict[str, set[str]] = {}
-    for r in results:
-        if r.source_type == "pr_assessment":
-            key = (r.metadata.get("repo"), r.metadata.get("pr_number"))
-            if key in participant_map:
-                id_participants[r.id] = participant_map[key]
-    return id_participants
+async def _run_search(
+    lens: LensClient,
+    query: str,
+    include_prs: bool,
+    include_issues: bool,
+    include_telegram: bool,
+    n_results: int = 15,
+) -> tuple[
+    list[SearchResult],
+    dict[str, PRWithAssessment],
+    dict[str, IssueWithAssessment],
+    dict[str, dict],
+]:
+    """Run the hybrid search and enrich hits with card-ready data."""
+    cols = _active_collections(include_prs, include_issues, include_telegram)
+    results = await lens.search(query, n_results=n_results, collections=cols)
+    prs_by_id = await _enrich_prs_full(results, lens)
+    issues_by_id = await _enrich_issues_full(results, lens)
+    telegram_by_id = _enrich_telegram_cards(results)
+    return results, prs_by_id, issues_by_id, telegram_by_id
 
 
 @router.get("/search", response_class=HTMLResponse)
@@ -125,20 +153,18 @@ async def search_page(request: Request, q: str = "", user: dict = Depends(requir
     """Full search page — renders form + results."""
     templates = request.app.state.templates
     lens = _get_lens(request)
-    results = []
-    pr_titles = {}
-    issue_titles = {}
-    pr_participants = {}
+    results: list[SearchResult] = []
+    prs_by_id: dict[str, PRWithAssessment] = {}
+    issues_by_id: dict[str, IssueWithAssessment] = {}
+    telegram_by_id: dict[str, dict] = {}
     error = None
     include_prs, include_issues, include_telegram = _parse_filters(request)
 
     if q.strip():
         try:
-            cols = _active_collections(include_prs, include_issues, include_telegram)
-            results = await lens.search(q.strip(), n_results=15, collections=cols)
-            pr_titles = await _enrich_pr_titles(results, lens)
-            issue_titles = await _enrich_issue_titles(results, lens)
-            pr_participants = await _enrich_pr_participants(results, lens)
+            results, prs_by_id, issues_by_id, telegram_by_id = await _run_search(
+                lens, q.strip(), include_prs, include_issues, include_telegram,
+            )
         except Exception as exc:
             error = str(exc)
             logger.warning("Search unavailable: %s", error)
@@ -149,9 +175,9 @@ async def search_page(request: Request, q: str = "", user: dict = Depends(requir
         context={
             "q": q,
             "results": results,
-            "pr_titles": pr_titles,
-            "issue_titles": issue_titles,
-            "pr_participants": pr_participants,
+            "prs_by_id": prs_by_id,
+            "issues_by_id": issues_by_id,
+            "telegram_by_id": telegram_by_id,
             "error": error,
             "include_prs": include_prs,
             "include_issues": include_issues,
@@ -165,27 +191,32 @@ async def search_results_partial(request: Request, q: str = "", user: dict = Dep
     """HTMX partial — returns just the results list for live search."""
     templates = request.app.state.templates
     lens = _get_lens(request)
-    results = []
-    pr_titles = {}
-    issue_titles = {}
-    pr_participants = {}
+    results: list[SearchResult] = []
+    prs_by_id: dict[str, PRWithAssessment] = {}
+    issues_by_id: dict[str, IssueWithAssessment] = {}
+    telegram_by_id: dict[str, dict] = {}
     error = None
     include_prs, include_issues, include_telegram = _parse_filters(request)
 
     if q.strip():
         try:
-            cols = _active_collections(include_prs, include_issues, include_telegram)
-            results = await lens.search(q.strip(), n_results=15, collections=cols)
-            pr_titles = await _enrich_pr_titles(results, lens)
-            issue_titles = await _enrich_issue_titles(results, lens)
-            pr_participants = await _enrich_pr_participants(results, lens)
+            results, prs_by_id, issues_by_id, telegram_by_id = await _run_search(
+                lens, q.strip(), include_prs, include_issues, include_telegram,
+            )
         except Exception as exc:
             error = str(exc)
 
     return templates.TemplateResponse(
         request=request,
         name="search/_results.html",
-        context={"q": q, "results": results, "pr_titles": pr_titles, "issue_titles": issue_titles, "pr_participants": pr_participants, "error": error},
+        context={
+            "q": q,
+            "results": results,
+            "prs_by_id": prs_by_id,
+            "issues_by_id": issues_by_id,
+            "telegram_by_id": telegram_by_id,
+            "error": error,
+        },
     )
 
 
@@ -251,7 +282,6 @@ async def _get_telegram_link(lens: LensClient, chroma_id: str) -> str | None:
     # ai_digests source_ref: chat_1829170082/2023-11-16_to_2023-11-23/thread_2
     source_ref = chroma_id.removeprefix("tg_")
 
-    # Extract chat_id from source_ref
     parts = source_ref.split("/")
     chat_id_str = parts[0].removeprefix("chat_")
 
@@ -268,9 +298,8 @@ async def _get_telegram_link(lens: LensClient, chroma_id: str) -> str | None:
     if not row or not row[0]:
         return None
 
-    # Telegram deep link format for private groups
-    # chat_id in source_ref may be positive (1829170082) or negative (-1001829170082)
-    # t.me/c/ needs the raw number without the -100 prefix
+    # chat_id in source_ref may be positive (1829170082) or negative (-1001829170082).
+    # t.me/c/ needs the raw number without the -100 prefix.
     chat_id = chat_id_str.lstrip("-")
     if chat_id.startswith("100"):
         chat_id = chat_id[3:]
@@ -293,19 +322,23 @@ async def telegram_detail_page(request: Request, chroma_id: str, user: dict = De
 
     parsed = _parse_telegram_text(thread.text)
 
-    # Resolve participant display names to GitHub logins for avatars
     person_names = [t["name"] for t in parsed["person_takes"]]
     github_map = await lens.resolve_display_names(person_names)
     for take in parsed["person_takes"]:
         take["github_login"] = github_map.get(take["name"])
 
-    # Build Telegram deep link
     telegram_link = await _get_telegram_link(lens, chroma_id)
 
     return templates.TemplateResponse(
         request=request,
-        name="search/telegram_detail.html",
-        context={"thread": thread, "parsed": parsed, "telegram_link": telegram_link},
+        name="telegram_detail.html",
+        context={
+            "thread": thread,
+            "parsed": parsed,
+            "telegram_link": telegram_link,
+            "back_url": "javascript:history.back()",
+            "back_label": "Back",
+        },
     )
 
 
@@ -328,8 +361,12 @@ async def pr_detail_page(
 
     return templates.TemplateResponse(
         request=request,
-        name="search/pr_detail.html",
-        context={"detail": detail},
+        name="pr_detail.html",
+        context={
+            "detail": detail,
+            "back_url": "javascript:history.back()",
+            "back_label": "Back",
+        },
     )
 
 
@@ -356,8 +393,12 @@ async def issue_detail_page(
 
     return templates.TemplateResponse(
         request=request,
-        name="search/issue_detail.html",
-        context={"detail": detail},
+        name="issue_detail.html",
+        context={
+            "detail": detail,
+            "back_url": "javascript:history.back()",
+            "back_label": "Back",
+        },
     )
 
 
@@ -374,10 +415,10 @@ async def related_context(
     """HTMX partial — related context for a PR or issue detail page."""
     templates = request.app.state.templates
     lens = _get_lens(request)
-    results = []
-    pr_titles = {}
-    issue_titles = {}
-    pr_participants = {}
+    results: list[SearchResult] = []
+    prs_by_id: dict[str, PRWithAssessment] = {}
+    issues_by_id: dict[str, IssueWithAssessment] = {}
+    telegram_by_id: dict[str, dict] = {}
     error = None
     repo = f"{repo_owner}/{repo_name}"
 
@@ -390,9 +431,9 @@ async def related_context(
                 query = f"PR #{number} ({repo}): {summary}"
                 exclude_id = f"pr_{repo}_{number}"
             results = await lens.search_related(query, exclude_id=exclude_id, n_results=5)
-            pr_titles = await _enrich_pr_titles(results, lens)
-            issue_titles = await _enrich_issue_titles(results, lens)
-            pr_participants = await _enrich_pr_participants(results, lens)
+            prs_by_id = await _enrich_prs_full(results, lens)
+            issues_by_id = await _enrich_issues_full(results, lens)
+            telegram_by_id = _enrich_telegram_cards(results)
         except Exception as exc:
             error = str(exc)
             logger.warning("Related context search unavailable: %s", error)
@@ -400,5 +441,11 @@ async def related_context(
     return templates.TemplateResponse(
         request=request,
         name="search/_pr_context.html",
-        context={"results": results, "pr_titles": pr_titles, "issue_titles": issue_titles, "pr_participants": pr_participants, "error": error},
+        context={
+            "results": results,
+            "prs_by_id": prs_by_id,
+            "issues_by_id": issues_by_id,
+            "telegram_by_id": telegram_by_id,
+            "error": error,
+        },
     )

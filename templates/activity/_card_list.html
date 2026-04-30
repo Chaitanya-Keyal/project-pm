@@ -7,11 +7,14 @@
     <div class="card-list">
         {% for item in items %}
             {% if item.item_type in ("pr_merged", "pr_closed") %}
-            {% include "activity/_pr_event_card.html" %}
+                {% set pr = item.source %}
+                {% include "cards/_pr_card.html" %}
             {% elif item.item_type == "issue" %}
-            {% include "activity/_issue_card.html" %}
+                {% set issue = item.source %}
+                {% include "cards/_issue_card.html" %}
             {% elif item.item_type == "telegram" %}
-            {% include "activity/_telegram_card.html" %}
+                {% set tg = item.source %}
+                {% include "cards/_telegram_card.html" %}
             {% endif %}
         {% endfor %}
     </div>

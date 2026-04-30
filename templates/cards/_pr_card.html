@@ -1,32 +1,55 @@
+{# Unified PR card — works for open PRs, merged/closed PRs, and search hits.
+   Required:  pr (any object with PR attrs: repo, number, title, author, state,
+              tier, risk, summary, recommendation, participant_contributions,
+              pending_actions, created_at, updated_at, merged_at, closed_at,
+              last_actor)
+   Optional:  detail_url  — link target for the card title (defaults to /search/pr/...)
+              score       — search relevance (0..1); shows % badge when set
+#}
+{% set current_user = request.session.get('github_username', '') %}
+{% set detail_url = detail_url | default('/search/pr/' ~ pr.repo ~ '/' ~ pr.number) %}
+{% set short_repo = pr.repo.split('/')[-1] if '/' in pr.repo else pr.repo %}
+{% if pr.state == "merged" and pr.merged_at %}
+    {% set event_ts = pr.merged_at %}
+    {% set event_label = "merged" %}
+{% elif pr.state == "closed" and pr.closed_at %}
+    {% set event_ts = pr.closed_at %}
+    {% set event_label = "closed" %}
+{% else %}
+    {% set event_ts = pr.updated_at %}
+    {% set event_label = "updated" %}
+{% endif %}
 <div class="card">
-    {% set current_user = request.session.get('github_username', '') %}
     <div class="card-header">
         <div class="card-title-row">
-            <a href="{{ pr_detail_url }}" class="card-title">
-                PR #{{ pr.number }} — {{ pr.title }}
+            <a href="{{ detail_url }}" class="card-title">
+                PR #{{ pr.number }} &mdash; {{ pr.title }}
             </a>
+            {% if score is defined and score is not none %}
+            <span class="card-score">{{ "%.0f"|format(score * 100) }}%</span>
+            {% endif %}
             <a href="https://github.com/{{ pr.repo }}/pull/{{ pr.number }}" target="_blank" rel="noopener" class="card-gh-icon" title="Open on GitHub">&nearr;</a>
         </div>
         <div class="card-meta">
+            {% if pr.author %}
             <img src="https://github.com/{{ pr.author }}.png?size=40" alt="" class="avatar avatar-sm">
             <span>{{ pr.author }}</span>
-            {% set short_repo = pr.repo.split('/')[-1] if '/' in pr.repo else pr.repo %}
+            {% endif %}
             {% if pr.repo != "SeedSigner/seedsigner" %}
             <span class="card-sep">&middot;</span>
             <span class="card-repo">{{ short_repo }}</span>
             {% endif %}
             <span class="card-badges">
-                {% if current_user and pr.participant_contributions and current_user.lower() in pr.participant_contributions | map(attribute='github_username') | map('lower') | list %}
+                <span class="badge badge-source badge-source-pr">PR</span>
+                {% set participant_logins = (pr.participant_contributions or []) | map(attribute='github_username') | map('lower') | list %}
+                {% if current_user and (current_user.lower() in participant_logins or (pr.author and pr.author.lower() == current_user.lower())) %}
                 <span class="badge badge-interacted" title="You've participated in this PR">Involved</span>
-                {% elif current_user and pr.author.lower() == current_user.lower() %}
-                <span class="badge badge-interacted" title="You authored this PR">Involved</span>
                 {% endif %}
                 {% if pr.state %}
                 <span class="badge badge-state badge-state-{{ pr.state }}">{{ pr.state | capitalize }}</span>
                 {% endif %}
-                {% set tier_val = pr.tier if pr.tier is not none else None %}
-                {% if tier_val is not none %}
-                <span class="badge badge-tier badge-tier-{{ tier_val }}">{{ {0: "Trivial", 1: "Straightforward", 2: "Significant", 3: "Complex"}.get(tier_val, "Unknown") }}</span>
+                {% if pr.tier is not none %}
+                <span class="badge badge-tier badge-tier-{{ pr.tier }}">{{ {0: "Trivial", 1: "Straightforward", 2: "Significant", 3: "Complex"}.get(pr.tier, "Unknown") }}</span>
                 {% endif %}
                 {% if pr.risk %}
                 <span class="badge badge-{{ {"low": "success", "medium": "warning", "high": "danger"}.get(pr.risk, "") }}">{{ pr.risk }} risk</span>
@@ -34,8 +57,14 @@
             </span>
         </div>
         <div class="card-timestamps">
-            {% if pr.updated_at %}
-            <span title="{{ pr.updated_at }}">updated {{ pr.updated_at | days_ago }}</span>
+            {% if event_ts %}
+            <span title="{{ event_ts }}">{{ event_label }} {{ event_ts | days_ago }}{% if pr.last_actor %}:{% endif %}</span>
+            {% if pr.last_actor %}
+            <span class="card-last-actor" title="{{ pr.last_actor.at }}">
+                <img src="https://github.com/{{ pr.last_actor.username }}.png?size=40" alt="" class="avatar avatar-xs">
+                {{ pr.last_actor.username }} {{ pr.last_actor.action }}
+            </span>
+            {% endif %}
             {% endif %}
             {% if pr.created_at %}
             <span class="card-sep">&middot;</span>
@@ -56,18 +85,20 @@
                 {% else %}
                 <strong>{{ username }}</strong>
                 {% endif %}
-                — {{ action.open_items }} item{{ 's' if action.open_items != 1 else '' }} pending
+                &mdash; {{ action.open_items }} item{{ 's' if action.open_items != 1 else '' }} pending
             </span>
         </div>
         {% endfor %}
     </div>
     {% endif %}
     {% endif %}
-    {% set parts = pr.summary | split_summary if pr.summary else {"description": "", "updates": []} %}
+    {% if pr.summary %}
+    {% set parts = pr.summary | split_summary %}
     {% if parts.description %}
     <div class="card-body">
         <p class="card-description">{{ parts.description }}</p>
     </div>
+    {% endif %}
     {% endif %}
     {% if pr.recommendation %}
     <div class="card-footer">

@@ -1,0 +1,74 @@
+{# Unified issue card — works for activity feed and search hits.
+   Required:  issue (IssueWithAssessment-like)
+   Optional:  detail_url — link target (defaults to /search/issue/...)
+              score      — search relevance
+#}
+{% set detail_url = detail_url | default('/search/issue/' ~ issue.repo ~ '/' ~ issue.number) %}
+{% set short_repo = issue.repo.split('/')[-1] if '/' in issue.repo else issue.repo %}
+<div class="card">
+    <div class="card-header">
+        <div class="card-title-row">
+            <a href="{{ detail_url }}" class="card-title">
+                Issue #{{ issue.number }} &mdash; {{ issue.title }}
+            </a>
+            {% if score is defined and score is not none %}
+            <span class="card-score">{{ "%.0f"|format(score * 100) }}%</span>
+            {% endif %}
+            <a href="https://github.com/{{ issue.repo }}/issues/{{ issue.number }}" target="_blank" rel="noopener" class="card-gh-icon" title="Open on GitHub">&nearr;</a>
+        </div>
+        <div class="card-meta">
+            {% if issue.author %}
+            <img src="https://github.com/{{ issue.author }}.png?size=40" alt="" class="avatar avatar-sm">
+            <span>{{ issue.author }}</span>
+            {% endif %}
+            {% if issue.repo != "SeedSigner/seedsigner" %}
+            <span class="card-sep">&middot;</span>
+            <span class="card-repo">{{ short_repo }}</span>
+            {% endif %}
+            <span class="card-badges">
+                <span class="badge badge-source badge-source-issue">Issue</span>
+                {% if issue.tier is not none %}
+                <span class="badge badge-tier badge-tier-{{ issue.tier }}">Tier {{ issue.tier }}</span>
+                {% endif %}
+                {% if issue.category %}
+                <span class="badge badge-complexity">{{ issue.category | replace('_', ' ') }}</span>
+                {% endif %}
+                {% if issue.discussion_state %}
+                <span class="badge badge-discussion-{{ issue.discussion_state }}">{{ issue.discussion_state | replace('_', ' ') }}</span>
+                {% endif %}
+                {% if issue.impact %}
+                <span class="badge badge-{{ {"low": "success", "medium": "warning", "high": "danger"}.get(issue.impact, "") }}">{{ issue.impact }} impact</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="card-timestamps">
+            {% if issue.updated_at %}
+            <span title="{{ issue.updated_at }}">updated {{ issue.updated_at | days_ago }}{% if issue.last_actor %}:{% endif %}</span>
+            {% if issue.last_actor %}
+            <span class="card-last-actor" title="{{ issue.last_actor.at }}">
+                <img src="https://github.com/{{ issue.last_actor.username }}.png?size=40" alt="" class="avatar avatar-xs">
+                {{ issue.last_actor.username }} {{ issue.last_actor.action }}
+            </span>
+            {% endif %}
+            {% endif %}
+            {% if issue.comment_count %}
+            <span class="card-sep">&middot;</span>
+            <span>{{ issue.comment_count }} comment{{ 's' if issue.comment_count != 1 else '' }}</span>
+            {% endif %}
+            {% if issue.created_at %}
+            <span class="card-sep">&middot;</span>
+            <span title="{{ issue.created_at }}">opened {{ issue.created_at | days_ago }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% if issue.summary %}
+    <div class="card-body">
+        <p class="card-description">{{ issue.summary }}</p>
+    </div>
+    {% endif %}
+    {% if issue.recommendation %}
+    <div class="card-footer">
+        <p class="card-recommendation">{{ issue.recommendation }}</p>
+    </div>
+    {% endif %}
+</div>

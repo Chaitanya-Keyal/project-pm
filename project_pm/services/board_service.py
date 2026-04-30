@@ -48,6 +48,7 @@ class BoardItem:
     category: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    last_actor: dict | None = None
 
     @property
     def source_ref(self) -> str:
@@ -115,8 +116,8 @@ class DetailView:
     num_comments: int = 0
     num_commits: int = 0
 
-    # Computed: viewer-specific
-    viewer_actions: dict | None = None
+    # Most recent action: {"username", "at": datetime, "action": str}
+    last_actor: dict | None = None
 
     @property
     def github_url(self) -> str:
@@ -147,12 +148,6 @@ class DetailView:
     @property
     def stale_reason_label(self) -> str:
         return STALE_REASON_LABELS.get(self.stale_reason or "", "")
-
-    @property
-    def has_viewer_actions(self) -> bool:
-        return bool(
-            self.viewer_actions and self.viewer_actions.get("open_items", 0) > 0
-        )
 
 
 @dataclass
@@ -228,6 +223,7 @@ def _to_board_item(pr: PRWithAssessment) -> BoardItem:
         category=category,
         created_at=pr.created_at,
         updated_at=pr.updated_at,
+        last_actor=pr.last_actor,
     )
 
 
@@ -330,9 +326,8 @@ async def build_pr_detail(
     lens: LensClient,
     repo: str,
     number: int,
-    github_username: str | None = None,
 ) -> DetailView | None:
-    """Fetch full PR detail from Lens, optionally personalized to a viewer."""
+    """Fetch full PR detail from Lens."""
     pr = await lens.get_pr_detail(repo, number)
     if not pr:
         return None
@@ -364,11 +359,6 @@ async def build_pr_detail(
         if isinstance(r, dict) and r.get("commit_id")
     }
 
-    # Viewer-specific actions (only when viewing from a board)
-    viewer_actions = None
-    if github_username and pr.pending_actions and isinstance(pr.pending_actions, dict):
-        viewer_actions = pr.pending_actions.get(github_username)
-
     return DetailView(
         repo=pr.repo,
         number=pr.number,
@@ -399,7 +389,7 @@ async def build_pr_detail(
         num_review_comments=len(raw_review_comments),
         num_comments=len(raw_issue_comments),
         num_commits=len(commit_shas),
-        viewer_actions=viewer_actions,
+        last_actor=pr.last_actor,
     )
 
 

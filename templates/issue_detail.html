@@ -9,7 +9,7 @@
 {% block content %}
 <div class="detail-page">
 
-    <a href="javascript:history.back()" class="detail-back">&larr; Back to results</a>
+    <a href="{{ back_url | default('javascript:history.back()') }}" class="detail-back">&larr; {{ back_label | default('Back') }}</a>
 
     {# === HEADER === #}
     <div class="detail-header">
@@ -182,7 +182,6 @@
     {# === FOOTER === #}
     <div class="detail-footer">
         <a href="https://github.com/{{ detail.repo }}/issues/{{ detail.number }}" target="_blank" rel="noopener" class="btn btn-primary">Open on GitHub &nearr;</a>
-        <a href="javascript:history.back()" class="btn btn-secondary">&larr; Back to results</a>
     </div>
 
 </div>
