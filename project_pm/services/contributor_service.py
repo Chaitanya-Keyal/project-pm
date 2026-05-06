@@ -10,6 +10,25 @@ from project_lens import LensClient
 from project_pm.models.contributor import Contributor
 
 
+# Repos that count as "in scope" for the SeedSigner contributor ranking.
+# Contributors whose `repos_active` does not intersect this set are filtered
+# out of the ranked list (e.g. embit-only contributors). This keeps the lens
+# DB unfiltered so other consumers can still see ecosystem-wide activity,
+# while project-pm's view stays scoped to SeedSigner contributors.
+#
+# Lens stores `repos_active` entries as `owner/name` (matching the values on
+# GitCommit.repo / GithubPR.repo), so this set must use the full-name form.
+SEEDSIGNER_SCOPE_REPOS = {
+    "SeedSigner/seedsigner",
+    "SeedSigner/seedsigner-os",
+    "SeedSigner/seedsigner-emulator",
+    "SeedSigner/seedsigner-translations",
+    "SeedSigner/seedsigner-settings-generator",
+    "SeedSigner/independent_custody_guide",
+    "SeedSigner/hardware",
+}
+
+
 @dataclass
 class DiscoveredContributor:
     """A contributor discovered from Lens data."""
@@ -54,6 +73,25 @@ async def discover_contributors(
         )
         for c in lens_contributors
     ]
+
+    # Filter to contributors whose `repos_active` intersects with the
+    # SeedSigner scope set. This drops e.g. embit-only contributors so
+    # the ranked list stays scoped to "SeedSigner contributors". If a
+    # contributor has no profile (no `repos_active` available), keep them
+    # — fail-open so we don't drop legitimate contributors on missing data.
+    profiles = await lens.list_contributor_profiles()
+    profile_map = {p.github_login: p for p in profiles}
+
+    def _in_scope(dc: DiscoveredContributor) -> bool:
+        profile = profile_map.get(dc.github_username)
+        if profile is None:
+            return True
+        repos_active = profile.stats.get("repos_active") or []
+        if not repos_active:
+            return True
+        return bool(set(repos_active) & SEEDSIGNER_SCOPE_REPOS)
+
+    contributors = [c for c in contributors if _in_scope(c)]
 
     # Merge with PM role overrides
     role_result = await pm_db.execute(select(Contributor))
